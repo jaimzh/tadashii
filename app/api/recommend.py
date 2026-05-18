@@ -1,17 +1,13 @@
 from fastapi import APIRouter
-from app.models.request_models import RecommendRequest, RecommendResponse
+from app.models.request_models import RecommendRequest
+from app.services.jikan_service import search_anime
 
 router = APIRouter()
 
-@router.post("/recommend", response_model=RecommendResponse)
+@router.post("/recommend")
 def recommend(data: RecommendRequest):
+    anime_results = search_anime(data.prompt)
     return {
         "input": data.prompt,
-        "results": [
-            {
-                "title": "Naruto",
-                "match_score": 95,
-                "reason": "Underdog story that matches emotional growth"
-            }
-        ]
+        "results": anime_results
     }
