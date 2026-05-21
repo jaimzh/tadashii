@@ -1,3 +1,4 @@
+import json
 import os
 from dotenv import load_dotenv
 from google import genai
@@ -33,4 +34,4 @@ Return format:
         contents=prompt
     )
 
-    return response.text
+    return json.loads(response.text)

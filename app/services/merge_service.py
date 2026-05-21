@@ -14,3 +14,6 @@ def merge_results(keyword_results, suggested_results):
             seen.add(anime_id)
 
     return merged
+
+
+

@@ -36,4 +36,7 @@ async def health_check():
 
 
 
+# cd backend
+# venv\Scripts\activate
+# cd app
 # uvicorn app.main:app --reload
