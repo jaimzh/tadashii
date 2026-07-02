@@ -2,7 +2,7 @@ import requests
 
 BASE_URL = "https://api.jikan.moe/v4"
 
-def search_anime(query: str):
+def jikan_search_anime(query: str):
     response = requests.get(
         f"{BASE_URL}/anime",
         params={"q": query, "limit": 10}
@@ -19,7 +19,7 @@ def search_multiple_titles(titles):
     results = []
 
     for title in titles["suggested_anime"]:
-        anime = search_anime(title)
+        anime = jikan_search_anime(title)
 
         if anime:
             results.extend(anime)

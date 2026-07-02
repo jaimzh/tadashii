@@ -16,7 +16,7 @@ You are an anime recommendation engine.
 Given this user intent:
 {intent}
 
-Suggest 5–10 anime titles that best match.
+Suggest 5–10 or as much anime titles that best match.
 
 Rules:
 - Only return anime titles that actually exist
