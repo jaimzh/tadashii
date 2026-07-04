@@ -1,14 +1,14 @@
 from fastapi import APIRouter
 from app.models.request_models import RecommendRequest
-from app.services.jikan_service import jikan_search_anime, search_multiple_titles
+from backend.app.services.retreival.jikan_service import jikan_search_anime, search_multiple_titles
 
 
-from app.services.ai_intent_service import analyze_prompt
-from app.services.ai_suggest import suggest_anime
+from backend.app.services.intent.ai_intent_service import analyze_prompt
+from backend.app.services.retreival.ai_suggest import suggest_anime
 from app.services.filter_service import filter_results
-from app.services.merge_service import merge_results
+from backend.app.services.retreival.merge_service import merge_results
 
-from app.services.merge_service import merge_results
+from backend.app.services.retreival.merge_service import merge_results
 from app.services.filter_service import filter_results
 from app.services.ranking_service import rank_anime
 from app.services.franchise_service import remove_spinoffs
