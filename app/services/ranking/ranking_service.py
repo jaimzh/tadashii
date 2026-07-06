@@ -1,13 +1,27 @@
 # app/services/ranking_service.py
 
 from google import genai
-import os
 import json
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+from app.config import GEMINI_API_KEY, GEMINI_MODEL
+
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+
+def build_rank_payload(anime_list: list):
+    payload = []
+
+    for anime in anime_list[:30]:
+        if hasattr(anime, "model_dump"):
+            payload.append(anime.model_dump())
+        else:
+            payload.append(anime)
+
+    return payload
 
 
 def rank_anime(prompt: str, intent: dict, anime_list: list):
+    anime_payload = build_rank_payload(anime_list)
 
     prompt_payload = f"""
 You are an anime ranking engine.
@@ -21,7 +35,7 @@ INTENT:
 {json.dumps(intent, indent=2)}
 
 ANIME LIST:
-{json.dumps(anime_list[:30], indent=2)}
+{json.dumps(anime_payload, indent=2)}
 
 Return ONLY valid JSON:
 
@@ -29,22 +43,24 @@ Return ONLY valid JSON:
   {{
     "mal_id": 0,
     "title": "",
-    "prompt_match": 0-100,
+    "prompt_match": 0,
     "reason": "",
     "emotion_tags": []
   }}
 ]
 
 Rules:
+- prompt_match must be a number from 0 to 100
 - Score based on STORY + THEMES + CHARACTER ARC + SYNOPSIS
 - NOT popularity or rating
 - Be strict and reasoning-based
 - Keep reason under 20 words
 - Return sorted highest match first
+- Return only anime from the provided ANIME LIST
 """
 
     response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
+        model=GEMINI_MODEL,
         contents=prompt_payload
     )
 

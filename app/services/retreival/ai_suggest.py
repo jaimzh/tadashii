@@ -1,11 +1,9 @@
 import json
-import os
-from dotenv import load_dotenv
 from google import genai
 
-load_dotenv()
+from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 def suggest_anime(intent: dict):
@@ -16,7 +14,7 @@ You are an anime recommendation engine.
 Given this user intent:
 {intent}
 
-Suggest 5–10 or as much anime titles that best match.
+Suggest 5-10 or as much anime titles that best match.
 
 Rules:
 - Only return anime titles that actually exist
@@ -30,7 +28,7 @@ Return format:
 """
 
     response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
+        model=GEMINI_MODEL,
         contents=prompt
     )
 

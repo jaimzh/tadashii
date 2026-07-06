@@ -1,86 +1,37 @@
 from fastapi import APIRouter
+
 from app.models.request_models import RecommendRequest
-from backend.app.services.retreival.jikan_service import jikan_search_anime, search_multiple_titles
-
-
-from backend.app.services.intent.ai_intent_service import analyze_prompt
-from backend.app.services.retreival.ai_suggest import suggest_anime
-from app.services.filter_service import filter_results
-from backend.app.services.retreival.merge_service import merge_results
-
-from backend.app.services.retreival.merge_service import merge_results
-from app.services.filter_service import filter_results
-from app.services.ranking_service import rank_anime
-from app.services.franchise_service import remove_spinoffs
+from app.services.filter.filter_service import filter_candidates
+from app.services.intent.ai_intent_service import analyze_prompt
+from app.services.normalization.normalize_service import normalize_anime_results
+from app.services.ranking.ranking_service import rank_anime
+from app.services.response.response_builder_service import build_recommendation_results
+from app.services.retreival.ai_suggest import suggest_anime
+from app.services.retreival.jikan_service import search_anime_by_intent, search_anime_by_titles
+from app.services.retreival.merge_service import merge_results
 
 router = APIRouter()
 
 
-# @router.post("/recommend")
-# def recommend(data: RecommendRequest):
-
-#     intent = analyze_prompt(data.prompt)
-
-#     keyword_results = search_anime(" ".join(intent["search_keywords"]))
-#     suggested_titles = suggest_anime(intent)
-#     suggested_results = search_multiple_titles(suggested_titles)
-
-#     merged = merge_results(keyword_results, suggested_results)
-#     filtered = filter_results(merged)
-
-#     # ranked = rank_anime(data.prompt, intent, filtered)
-
-#     rank_input = []
-
-#     for anime in filtered:
-#         rank_input.append(
-#             {
-#                 "mal_id": anime["mal_id"],
-#                 "title": anime["title"],
-#                 "synopsis": anime.get("synopsis"),
-#                 "genres": [g["name"] for g in anime.get("genres", [])],
-#                 "themes": [t["name"] for t in anime.get("themes", [])],
-#                 "score": anime.get("score"),
-#                 "episodes": anime.get("episodes"),
-#             }
-#         )
-#     ranked = rank_anime(data.prompt, intent, rank_input)
-
-#     return {"input": data.prompt, "intent": intent, "results": ranked, "debug": {"keyword_results": keyword_results, "suggested_results": suggested_results, "rank_input": rank_input}}
-
-
 @router.post("/recommend")
 def recommend(data: RecommendRequest):
-
     intent = analyze_prompt(data.prompt)
 
-    # AI FIRST (strong signal)
-    ai_suggested_titles = suggest_anime(intent)
-    searched_suggested_results = search_multiple_titles(ai_suggested_titles)
+    ai_suggestions = suggest_anime(intent)
+    suggested_titles = ai_suggestions.get("suggested_anime", [])
 
-    # JIKAN SECOND (weak/broad signal) now i feel like this is unnecessary 
-    keyword_results = jikan_search_anime(
-        " ".join(intent["search_keywords"])
-    )[:5]
+    title_results = search_anime_by_titles(suggested_titles)
+    intent_results = search_anime_by_intent(intent)
 
-    # MERGE (dedupe)
-    merged = merge_results(keyword_results, searched_suggested_results)
+    merged_results = merge_results(title_results, intent_results)
+    normalized_results = normalize_anime_results(merged_results)
+    filtered_results = filter_candidates(normalized_results)
 
-    # FILTER (remove junk types)
-    filtered = filter_results(merged)
-
-    # CLEAN (remove movies/ovas if desired)
-    cleaned = remove_spinoffs(filtered)
-
-    # FINAL RANK
-    ranked = rank_anime(
-        data.prompt,
-        intent,
-        cleaned
-    )
+    rankings = rank_anime(data.prompt, intent, filtered_results)
+    results = build_recommendation_results(rankings, filtered_results)
 
     return {
         "input": data.prompt,
         "intent": intent,
-        "results": ranked
+        "results": results,
     }

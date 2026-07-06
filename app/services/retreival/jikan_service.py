@@ -1,17 +1,18 @@
 import requests
 
-BASE_URL = "https://api.jikan.moe/v4"
+from app.config import JIKAN_BASE_URL, JIKAN_SEARCH_LIMIT
 
 
 def jikan_search_anime(query: str):
     response = requests.get(
-        f"{BASE_URL}/anime",
-        params={"q": query, "limit": 10}
+        f"{JIKAN_BASE_URL}/anime",
+        params={"q": query, "limit": JIKAN_SEARCH_LIMIT}
     )
 
     data = response.json()
 
     return data.get("data", [])
+
 
 #our main boy 1
 def search_anime_by_titles(titles: list[str]):
@@ -42,7 +43,6 @@ def search_anime_by_keywords(keywords: list[str]):
             results.extend(anime)
 
     return results
-
 
 
 #our main boy2
