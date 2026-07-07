@@ -6,7 +6,7 @@ from app.config import GEMINI_API_KEY, GEMINI_MODEL
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 
-def suggest_anime(intent: dict):
+    def suggest_anime(intent: dict):
 
     prompt = f"""
 You are an anime recommendation engine.

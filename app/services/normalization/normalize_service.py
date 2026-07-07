@@ -1,4 +1,4 @@
-from app.models.request_models import AnimeCandidate
+from app.models.schema import AnimeCandidate
 
 
 def get_names(items: list[dict]) -> list[str]:
@@ -64,3 +64,4 @@ def normalize_anime_results(merged_results: list[dict]) -> list[AnimeCandidate]:
         candidates.append(candidate)
 
     return candidates
+

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.models.request_models import RecommendRequest
+from app.models.schema import RecommendRequest
 from app.services.filter.filter_service import filter_candidates
 from app.services.intent.ai_intent_service import analyze_prompt
 from app.services.normalization.normalize_service import normalize_anime_results
@@ -35,3 +35,4 @@ def recommend(data: RecommendRequest):
         "intent": intent,
         "results": results,
     }
+

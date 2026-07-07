@@ -1,204 +1,358 @@
-# Tadashii (正しい)
+# Tadashii Backend
 
-> **“The right story for you.”**  
-> *Not “objectively correct,” but emotionally correct — the story that matches your current feeling.*
+Tadashii is an emotion-aware anime recommendation backend built with FastAPI. It accepts a natural-language prompt, retrieves possible anime from Jikan, cleans the data into an internal model, filters noisy results, asks Gemini to rank the candidates, and returns frontend-friendly recommendation results.
 
-**Tadashii** is an **emotion-aware AI recommendation engine** for anime (and in the future, movies, series, books, and games). Instead of traditional metadata filtering (genres, tags, ratings), Tadashii allows users to search using emotional prompts and narrative desires (e.g., *"I want an anime where the MC feels worthless but slowly becomes confident despite no one believing in him"*), returning highly aligned suggestions with clear, AI-driven explanations.
+The current backend is intentionally simple: it is a pipeline of small services where each stage has one job.
 
----
+## Current Pipeline
 
-## Core Value Proposition
+The backend currently uses a six-step recommendation pipeline:
 
-| Feature | Traditional Platforms (MAL, AniList) | Tadashii |
-| :--- | :--- | :--- |
-| **Discovery Model** | Genre filtering, tag sorting, rating-based lists | **Emotion-driven natural language queries** |
-| **Relevance** | Searches titles matching literal tags or categories | Finds matches based on **emotional arcs and tone** |
-| **Transparency** | Simple list of shows | **AI-powered reasoning explaining the match** |
-
----
-
-## High-Level System Architecture
-
-The following flow illustrates how a user request traverses the Tadashii system:
+1. Intent parsing
+2. Candidate retrieval
+3. Normalization
+4. Filtering
+5. AI ranking
+6. Response building
 
 ```mermaid
-graph TD
-    User([User Input Prompt]) --> Frontend[Next.js Frontend]
-    Frontend --> Backend[FastAPI Backend]
-    
-    subgraph Core Backend Pipeline
-        Backend --> Intent[1. LLM Intent Interpreter]
-        Intent --> Retrieval[2. Jikan API Retrieval]
-        Retrieval --> ReRank[3. LLM Re-Ranking & Scoring]
-        ReRank --> Builder[4. Final Response Builder]
+graph LR
+    %% Styles
+    classDef io fill:#000000,stroke:#2ecc71,stroke-width:2px,color:#ffffff;
+    classDef io_out fill:#000000,stroke:#e74c3c,stroke-width:2px,color:#ffffff;
+    classDef process fill:#1a1c23,stroke:#ffffff,stroke-width:1px,color:#ffffff;
+
+    %% Nodes
+    user_query((user query)):::io
+    final_output((final output)):::io_out
+
+    subgraph pipeline [ Pipeline ]
+        direction LR
+        intent_parser[Intent Parser]:::process
+        retrieval[Retrieval]:::process
+        normalize[Normalize to Tadashii Shape]:::process
+        filter[Filter Clean Candidates]:::process
+        rank[Rank Clean Candidates]:::process
+        build_response[Build Final Response]:::process
     end
-    
-    Builder --> Frontend
-    Frontend --> UI[Interactive Card UI]
+
+    %% Connections
+    user_query --> intent_parser
+    intent_parser --> retrieval
+    retrieval --> normalize
+    normalize --> filter
+    filter --> rank
+    rank --> build_response
+    build_response --> final_output
+
+    %% Subgraph Styling
+    style pipeline fill:none,stroke:#f39c12,stroke-width:2px;
 ```
 
----
+## Pipeline Stages
 
-## Core Intelligence Pipeline
+### 1. Intent Parsing
 
-### 1. Intent Understanding (LLM)
-*   **Input:** Raw emotional user prompt.
-*   **Output:** Extracted structured parameters defining the emotional goals, target narrative arc, tone, and keyword hooks:
-    ```json
+File: `app/services/intent/ai_intent_service.py`
+
+The intent parser sends the user prompt to Gemini and asks for structured search intent.
+
+Expected intent shape:
+
+```json
+{
+  "search_keywords": [],
+  "semantic_tags": [],
+  "themes": [],
+  "mood": "",
+  "genres": [],
+  "character_arc": ""
+}
+```
+
+This stage should only understand the user's request. It should not call Jikan, filter anime, rank anime, or build the final response.
+
+### 2. Candidate Retrieval
+
+Files:
+
+```text
+app/services/retreival/ai_suggest.py
+app/services/retreival/jikan_service.py
+app/services/retreival/merge_service.py
+```
+
+Retrieval gathers possible anime. It does not decide which anime is best.
+
+Current retrieval paths:
+
+```text
+AI suggested titles -> Jikan title search
+Parsed intent terms -> Jikan keyword search
+```
+
+The results are merged and deduplicated by `mal_id`.
+
+### 3. Normalization
+
+File: `app/services/normalization/normalize_service.py`
+
+Normalization converts raw Jikan dictionaries into Tadashii's internal `AnimeCandidate` model.
+
+Raw Jikan data is large and nested. The normalizer extracts only the useful fields and cleans nested structures.
+
+Examples:
+
+```text
+Jikan genres objects -> list[str]
+Jikan studios objects -> list[str]
+Jikan images.jpg.large_image_url -> image
+Jikan trailer.url -> trailer_url
+```
+
+Internal candidate shape:
+
+```python
+class AnimeCandidate(BaseModel):
+    mal_id: int
+    title: str
+    type: str | None = None
+    synopsis: str | None = None
+    genres: list[str] = []
+    themes: list[str] = []
+    demographics: list[str] = []
+    score: float | None = None
+    episodes: int | None = None
+    year: int | None = None
+    image: str | None = None
+    url: str | None = None
+    data_source: str = "jikan"
+```
+
+### 4. Filtering
+
+File: `app/services/filter/filter_service.py`
+
+Filtering removes obvious junk before the AI ranker sees candidates.
+
+Current filters remove:
+
+```text
+Music entries
+Rx - Hentai entries
+Hentai genre entries
+Very short Special, OVA, or ONA entries
+Entries with no synopsis
+```
+
+This keeps ranking cheaper, cleaner, and easier to debug.
+
+### 5. AI Ranking
+
+File: `app/services/ranking/ranking_service.py`
+
+Ranking sends only cleaned candidates to Gemini. It does not receive raw Jikan blobs.
+
+The ranker returns lightweight judgment objects:
+
+```json
+[
+  {
+    "mal_id": 20,
+    "title": "Naruto",
+    "prompt_match": 95,
+    "reason": "Strong lonely underdog growth story.",
+    "emotion_tags": ["lonely", "underdog", "growth"]
+  }
+]
+```
+
+The ranking service uses `build_rank_payload()` to convert Pydantic `AnimeCandidate` objects into plain dictionaries before sending them to Gemini.
+
+### 6. Response Building
+
+File: `app/services/response/response_builder_service.py`
+
+The response builder combines:
+
+```text
+AI ranking output
++ normalized AnimeCandidate objects
+= RecommendationResult objects
+```
+
+Final result model:
+
+```python
+class RecommendationResult(BaseModel):
+    anime: AnimeCandidate
+    match_score: int
+    reason: str
+    emotion_tags: list[str] = []
+```
+
+The response builder matches ranking data back to candidates using `mal_id`. If the AI returns an unknown `mal_id`, that ranking item is skipped.
+
+## API
+
+### POST `/api/recommend`
+
+Request:
+
+```json
+{
+  "prompt": "I want an emotional anime about a lonely underdog who gets stronger and finds real friends."
+}
+```
+
+Response shape:
+
+```json
+{
+  "input": "I want an emotional anime about a lonely underdog who gets stronger and finds real friends.",
+  "intent": {
+    "search_keywords": ["underdog", "growth", "friendship"],
+    "semantic_tags": ["zero to hero"],
+    "themes": ["loneliness", "belonging"],
+    "mood": "emotional",
+    "genres": ["Drama", "Shounen"],
+    "character_arc": "lonely outcast grows stronger"
+  },
+  "results": [
     {
-      "themes": ["self-worth", "growth"],
-      "tone": "emotional",
-      "arc": "despair → growth",
-      "keywords": ["underdog", "perseverance"]
+      "anime": {
+        "mal_id": 20,
+        "title": "Naruto",
+        "type": "TV",
+        "synopsis": "...",
+        "genres": ["Action", "Adventure", "Fantasy"],
+        "themes": [],
+        "score": 7.99,
+        "episodes": 220,
+        "year": 2002,
+        "image": "https://...",
+        "url": "https://myanimelist.net/anime/20/Naruto",
+        "data_source": "jikan"
+      },
+      "match_score": 95,
+      "reason": "Strong lonely underdog growth story.",
+      "emotion_tags": ["lonely", "underdog", "growth"]
     }
-    ```
+  ]
+}
+```
 
-### 2. Retrieval Layer (Jikan API)
-*   **Input:** Structured keywords and parameters.
-*   **Action:** Queries the live anime database using the Jikan API.
-*   **Output:** Retrieves top 10–30 raw anime candidates.
-
-### 3. AI Re-Ranking Layer
-*   **Action:** The LLM evaluates each candidate against the original user prompt for emotional alignment (0-100), narrative match, and tone similarity.
-*   **Output:** Specific scoring metrics and contextual explanations:
-    ```json
-    {
-      "match_score": 92,
-      "reason": "Strong underdog emotional arc that maps directly to the feeling of slowly overcoming low self-worth."
-    }
-    ```
-
-### 4. Final Response Builder
-*   **Action:** Combines the objective metadata (facts from the API) with the cognitive data (AI re-ranking & explanation).
-
----
-
-## Hybrid Scoring System
-
-The **Match Score** presented to the user is calculated using a weighted hybrid formula:
-
-$$\text{Match Score} = (0.6 \times \text{Emotional Alignment}) + (0.2 \times \text{Narrative Arc Match}) + (0.1 \times \text{Tone Match}) + (0.1 \times \text{Official Rating})$$
-
----
-
-## Final Anime Card Structure
-
-Every recommended anime card displays a beautiful combination of data:
-
-### Objective Data (Source: API)
-1. **Title & Cover Image**
-2. **Synopsis**
-3. **Animation Studio**
-4. **Official Rating** (MAL / AniList / IMDb)
-5. **Number of Episodes & Release Year**
-6. **Watch Links**
-
-### AI Layer (Source: Tadashii Intelligence)
-7. **Prompt Match Score** (0–100% Visual Indicator)
-8. **AI Explanation** (Why this anime matches the user's current emotional prompt)
-
----
-
-## Backend Directory Blueprint
-
-The backend is organized cleanly to separate routing, data models, third-party services, and core ranking logic:
+## Project Structure
 
 ```text
 backend/
-├── app/
-│   ├── api/                   # API Endpoints
-│   │   ├── __init__.py
-│   │   └── recommend.py       # Exposes the /recommend route
-│   ├── models/                # Pydantic Schemas / Models
-│   │   ├── __init__.py
-│   │   ├── request_models.py  # Incoming query payloads
-│   │   ├── anime_models.py    # Jikan/Anime metadata models
-│   │   ├── ai_models.py       # LLM outputs and scoring models
-│   │   └── response_models.py # Outbound payload structures
-│   ├── services/              # Third-party integration and processing services
-│   │   ├── openai_service.py  # LLM connection handler
-│   │   ├── jikan_service.py   # Jikan API client wrapper
-│   │   └── ranking_service.py # Core re-ranking orchestrator
-│   ├── core/                  # Core settings & prompt templates
-│   │   ├── prompts.py         # LLM system prompts
-│   │   └── config.py          # Environment settings and secrets
-│   ├── utils/                 # General utility scripts
-│   ├── __init__.py
-│   └── main.py                # App entrypoint, middleware (CORS) setup
-├── venv/                      # Virtual environment directory (git-ignored)
-├── .gitignore                 # Standard file exclusions
-└── README.md                  # Comprehensive product overview
+  app/
+    api/
+      recommend.py
+    models/
+      schema.py
+    services/
+      filter/
+        filter_service.py
+      intent/
+        ai_intent_service.py
+      normalization/
+        normalize_service.py
+      ranking/
+        ranking_service.py
+      response/
+        response_builder_service.py
+      retreival/
+        ai_suggest.py
+        jikan_service.py
+        merge_service.py
+        retrieval.py
+    config.py
+    main.py
+  tests/
+    test_retrieval_flow.py
+  .env
+  README.md
 ```
 
----
+Note: the folder name is currently `retreival`. It works as-is, but it is misspelled. Rename it carefully later only if you also update all imports.
 
-## API Endpoints
+## Configuration
 
-### `POST /api/recommend`
+Configuration lives in `app/config.py` and reads from `.env`.
 
-*   **Request Payload (`application/json`):**
-    ```json
-    {
-      "prompt": "anime where MC starts weak but becomes strong"
-    }
-    ```
+Required or supported environment variables:
 
-*   **Response Payload (`application/json`):**
-    ```json
-    {
-      "input": "anime where MC starts weak but becomes strong",
-      "results": [
-        {
-          "title": "Naruto",
-          "match_score": 95,
-          "reason": "Underdog emotional arc representing massive personal growth and perseverance.",
-          "episodes": 220,
-          "year": 2002,
-          "image": "https://cdn.myanimelist.net/images/anime/13/11460.jpg"
-        }
-      ]
-    }
-    ```
-
----
-
-## Installation & Quickstart
-
-### 1. Set Up Virtual Environment
-```bash
-python -m venv venv
-```
-Activate the environment:
-*   **Windows (PowerShell):** `.\venv\Scripts\Activate.ps1`
-*   **Windows (CMD):** `.\venv\Scripts\activate.bat`
-*   **macOS / Linux:** `source venv/bin/activate`
-
-### 2. Install Dependencies
-```bash
-pip install fastapi uvicorn pydantic
+```env
+GEMINI_API_KEY=your_api_key_here
+GEMINI_MODEL=gemini-3.1-flash-lite
+JIKAN_BASE_URL=https://api.jikan.moe/v4
+JIKAN_SEARCH_LIMIT=10
 ```
 
-### 3. Run Development Server
-```bash
-uvicorn app.main:app --reload
+`JIKAN_SEARCH_LIMIT` controls how many results Jikan returns for each search query.
+
+## Running The Server
+
+From inside the `backend` folder:
+
+```powershell
+venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8002
 ```
-*   **Swagger API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-*   **ReDoc Docs:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
----
+API docs:
 
-## Key Design Principles
+```text
+http://127.0.0.1:8002/docs
+```
 
-1.  **No RAG (for now):** We don't host vector databases or embedding pipelines. The Jikan API is the retrieval layer; the LLM is purely the reasoning/ranking layer.
-2.  **AI is NOT the database:** The LLM's only role is to interpret user intent, rank candidates, and generate personalized explanations.
-3.  **Truth comes from the API:** Ratings, episode counts, studios, and images are strictly loaded from official sources to completely eliminate hallucinations.
-4.  **Explicitly Out of Scope (for now):** No vector DBs, no custom embeddings pipeline, no user personalization history, and no heavy ML infrastructure.
+Health check:
 
----
+```text
+http://127.0.0.1:8002/health
+```
 
-## Future Expansion
+## Manual Smoke Test
 
-While starting with **anime**, the underlying engine is highly generic. Since the core system operates on **emotional resonance matching**, the retrieval layer can easily swap to source data from other providers to recommend:
-*   Movies & TV Shows
-*   Books & Light Novels
-*   Video Games
+A manual end-to-end retrieval smoke test lives here:
+
+```text
+tests/test_retrieval_flow.py
+```
+
+Run it from the project root:
+
+```powershell
+backend\venv\Scripts\python.exe backend\tests\test_retrieval_flow.py
+```
+
+This test calls Gemini and Jikan, so it requires network access and a valid `GEMINI_API_KEY`.
+
+## Design Rules
+
+The backend follows these rules:
+
+```text
+The LLM should not rank raw Jikan data.
+Jikan service should only talk to Jikan.
+Intent service should only parse intent.
+Normalization should create AnimeCandidate objects.
+Filtering should remove obvious junk before ranking.
+Ranking should return judgment data, not the full API response.
+Response builder should combine factual anime data with ranking output.
+```
+
+## Later Improvements
+
+Planned or likely future improvements:
+
+```text
+Rate limiting
+Jikan request retries and timeouts
+Gemini JSON cleanup for markdown-fenced responses
+Caching repeated Jikan and Gemini calls
+Better genre and theme search using Jikan IDs
+Better franchise handling for sequels, movies, specials, and recaps
+Moving request, domain, and response models into separate files if schema.py grows too large
+```
+

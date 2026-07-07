@@ -1,4 +1,4 @@
-from app.models.request_models import AnimeCandidate
+from app.models.schema import AnimeCandidate
 
 BLOCKED_TYPES = ["Music"]
 BLOCKED_RATINGS = ["Rx - Hentai"]
@@ -53,3 +53,4 @@ def filter_candidates(candidates: list[AnimeCandidate]) -> list[AnimeCandidate]:
             filtered.append(anime)
 
     return filtered
+

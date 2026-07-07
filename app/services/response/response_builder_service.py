@@ -1,4 +1,4 @@
-from app.models.request_models import AnimeCandidate, RecommendationResult
+from app.models.schema import AnimeCandidate, RecommendationResult
 
 
 def build_recommendation_results(
@@ -29,3 +29,4 @@ def build_recommendation_results(
         results.append(result)
 
     return results
+

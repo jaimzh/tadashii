@@ -27,12 +27,6 @@ def search_anime_by_titles(titles: list[str]):
     return results
 
 
-def search_multiple_titles(titles):
-    suggested_titles = titles.get("suggested_anime", [])
-
-    return search_anime_by_titles(suggested_titles)
-
-
 def search_anime_by_keywords(keywords: list[str]):
     results = []
 
