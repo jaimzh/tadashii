@@ -1,5 +1,56 @@
-@import './base.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-#app {
-  font-weight: normal;
+:root {
+  --bg-dark: hsl(0, 0%, 0%);
+  --bg-base: hsl(0, 0%, 0%);
+  --bg-light: hsl(0, 0%, 10%);
+
+  --text-main: hsl(0, 0%, 95%);
+  --text-muted: hsl(0, 0%, 70%);
+
+  --accent: rgb(0, 123, 255);
+  --accent-rgb: 0, 123, 255;
+
+  --border-color: hsl(0, 0%, 30%);
+  --ambient-glow: 0 0 40px -10px rgba(var(--accent-rgb), 0.35);
 }
+
+[data-theme="light"] {
+  
+  --bg-dark: hsl(0, 0%, 90%);
+  --bg-base: hsl(0, 0%, 98%);
+  --bg-light: hsl(0, 0%, 100%);
+
+  --text-main: hsl(0, 0%, 10%);
+  --text-muted: hsl(0, 0%, 45%);
+
+  --accent: rgb(0, 123, 255);
+  --accent-rgb: 0, 123, 255;
+
+  --border-color: hsl(0, 0%, 75%);
+  --ambient-glow: 0 0 40px -10px rgba(var(--accent-rgb), 0.35);
+}
+
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+[data-theme="dark"] .hero-image {
+  filter: invert(0);
+}
+
+
+[data-theme="light"] .hero-image {
+  filter: invert(1);
+}
+
+
