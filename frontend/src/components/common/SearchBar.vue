@@ -46,8 +46,9 @@ function handleSubmit() {
   border-radius: 50px;
   padding: 1px;
   overflow: hidden;
-   background: color-mix(in srgb, var(--border-color) 50%, transparent);
+  background: color-mix(in srgb, var(--border-color) 70%, transparent);
   transition: background 0.3s ease;
+   box-shadow: 0 8px 6px -6px rgba(0, 0, 0, 0.4);
 }
 
 .search-container:focus-within {
@@ -59,24 +60,23 @@ function handleSubmit() {
 .search-container::after {
   content: "";
   position: absolute;
-  width: 100px;
+  width: 150px;
   aspect-ratio: 1;
-  background: radial-gradient(100% 100% at right, transparent, white 5%, color-mix(in srgb, var(--accent) 40%, white) 25%, transparent 70%);
+  background: radial-gradient(circle, white 10%, color-mix(in srgb, var(--accent) 40%, white) 40%, transparent 70%);
   offset-path: border-box;
-  offset-anchor: 100% 50%;
-  filter: blur(8px);
+  offset-anchor: 50% 50%;
+  filter: blur(6px);
   pointer-events: none;
-  animation: trail 8s linear infinite;
-  
+  animation: trail 5s linear infinite;
 }
 
 .search-container::before {
-  z-index: 1;
+  z-index: 2;
 }
 
 .search-container::after {
-  z-index: 2;
-  animation-delay: -4s;
+  z-index: 1;
+  animation-delay: -2.5s;
   opacity: 0.5;
 }
 
@@ -91,7 +91,7 @@ function handleSubmit() {
   padding: 20px 28px;
   border: none;
   border-radius: 50px 0 0 50px;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   outline: none;
   background: var(--bg-base);
   color: var(--text-main);
@@ -99,6 +99,7 @@ function handleSubmit() {
 
 .search-input::placeholder {
   color: var(--text-muted);
+  opacity: 0.4;
 }
 
 .search-button {
@@ -106,8 +107,9 @@ function handleSubmit() {
   align-items: center;
   justify-content: center;
   padding: 20px 32px;
+  
   background: var(--bg-base);
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--text-muted) 42%, white);
   border: none;
   border-radius: 0 50px 50px 0;
   cursor: pointer;
@@ -120,10 +122,12 @@ function handleSubmit() {
 
 .search-button:not(:disabled) {
   
-  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 42%, white);
+
+  
 }
 
 .search-button:not(:disabled):hover {
-  color: color-mix(in srgb, var(--accent) 80%, white);
+  color: color-mix(in srgb, var(--accent) 82%, white);
 }
 </style>

@@ -4,13 +4,14 @@ import heroSvg from '@/assets/Group 5.svg'
 
 <template>
   <section class="animated-hero">
+    <!-- <img src="http://localhost:3000/cdn/testss.png" alt=""> -->
     <img :src="heroSvg" alt="" class="hero-image" />
 
     <p class="hero-subtitle">
       Let's find the right story for you! <br />
       Describe what you're in the mood for
     </p>
-    <div class="hero-glow"></div>
+    <!-- <div class="hero-glow"></div> -->
   </section>
 </template>
 
@@ -28,20 +29,8 @@ import heroSvg from '@/assets/Group 5.svg'
 }
 
 
-.hero-glow {
-  margin-top: 25rem;
-  position: absolute;
-  width: 500px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.3), transparent 90%);
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .hero-subtitle {
-  font-size: 1.3rem;
+  font-size: var(--font-size-lg);
   color: var(--text-muted);
   margin: 0 0 32px;
   background: linear-gradient(
@@ -53,5 +42,6 @@ import heroSvg from '@/assets/Group 5.svg'
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  opacity: 90%;
 }
 </style>

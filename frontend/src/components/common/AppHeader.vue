@@ -2,10 +2,11 @@
 import { onMounted } from 'vue';
 import { useTheme } from '@/coposables/useTheme';
 import { PhSun, PhMoon, PhQuestion } from '@phosphor-icons/vue';
+import SearchBar from './SearchBar.vue';
 
 const { theme, toggleTheme, initTheme } = useTheme();
 
-onMounted(() => {
+onMounted(() => { 
   initTheme();
 });
 </script>
@@ -17,7 +18,7 @@ onMounted(() => {
       <span class="app-name">Tadashii</span>
     </div>
    
-
+<!-- <SearchBar/> -->
     <div class="actions">
       <button @click="toggleTheme" class="icon-btn" aria-label="Toggle theme">
         <PhSun v-if="theme === 'dark'" :size="22" weight="bold" />
@@ -49,7 +50,7 @@ onMounted(() => {
 
 .app-name {
   font-weight: bold;
-  font-size: 1.25rem;
+  font-size: var(--font-size-lg);
   color: var(--text-main);
 }
 
