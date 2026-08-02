@@ -1,12 +1,14 @@
 <script setup>
 import AppHeader from '@/components/common/AppHeader.vue'
 import HomeView from './views/HomeView.vue'
+import ResultView from './views/ResultView.vue'
 </script>
 
 <template>
   <div class="wrapper">
   <AppHeader />
   <HomeView />
+  <ResultView />
   </div>
 </template>
 

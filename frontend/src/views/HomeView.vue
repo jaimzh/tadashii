@@ -2,16 +2,23 @@
 import { ref } from 'vue'
 import AnimatedHero from '@/components/common/AnimatedHero.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
+import Loader from '@/components/common/Loader.vue'
 
 const isDarkMode = ref(true)
+const isSearching = ref(false)
+
+function handleSearch() {
+  isSearching.value = true
+}
 </script>
 
 <template>
   <div class="home-view">
     <div class="wrapper">
-<AnimatedHero />
-        <SearchBar />
-       <div class="hero-glow"></div>
+      <Loader v-if="isSearching" />
+      <AnimatedHero v-else />
+      <SearchBar @submit="handleSearch" />
+      <div class="hero-glow"></div>
     </div>
   </div>
 </template>
@@ -44,6 +51,7 @@ const isDarkMode = ref(true)
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid red;
 
 }
 

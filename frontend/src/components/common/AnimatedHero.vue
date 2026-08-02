@@ -17,6 +17,7 @@ import heroSvg from '@/assets/Group 5.svg'
 
 <style scoped>
 .animated-hero {
+   border: 1px solid red;
   width: 100%;
   position: relative;
   display: flex;

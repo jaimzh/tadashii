@@ -3,10 +3,11 @@ import { ref } from 'vue'
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
 
 const query = ref('')
+const emit = defineEmits(['submit'])
 
 function handleSubmit() {
   if (query.value.trim()) {
-    // TODO: navigate to results or trigger search
+    emit('submit', query.value.trim())
   }
 }
 </script>
