@@ -4,11 +4,19 @@ import AnimatedHero from '@/components/common/AnimatedHero.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import Loader from '@/components/common/Loader.vue'
 
-const isDarkMode = ref(true)
-const isSearching = ref(false)
+defineProps({
+  isSearching: {
+    type: Boolean,
+    default: false,
+  },
+})
+const emit = defineEmits(['search'])
 
-function handleSearch() {
-  isSearching.value = true
+const searchBarEl = ref(null)
+
+function handleSearch(query) {
+  const rect = searchBarEl.value?.$el?.getBoundingClientRect()
+  emit('search', query, rect)
 }
 </script>
 
@@ -17,7 +25,7 @@ function handleSearch() {
     <div class="wrapper">
       <Loader v-if="isSearching" />
       <AnimatedHero v-else />
-      <SearchBar @submit="handleSearch" />
+      <SearchBar v-if="!isSearching" ref="searchBarEl" @submit="handleSearch" />
       <div class="hero-glow"></div>
     </div>
   </div>

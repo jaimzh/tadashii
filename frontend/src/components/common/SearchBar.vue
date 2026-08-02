@@ -2,10 +2,22 @@
 import { ref } from 'vue'
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
 
-const query = ref('')
+const props = defineProps({
+  value: {
+    type: String,
+    default: '',
+  },
+  readonly: {
+    type: Boolean,
+    default: false,
+  },
+})
 const emit = defineEmits(['submit'])
 
+const query = ref(props.value)
+
 function handleSubmit() {
+  if (props.readonly) return
   if (query.value.trim()) {
     emit('submit', query.value.trim())
   }
@@ -19,12 +31,13 @@ function handleSubmit() {
       type="text"
       autocomplete="off"
       class="search-input"
-      placeholder="What do you feel like watching?"
+      :readonly="readonly"
+      :placeholder="readonly ? '' : 'What do you feel like watching?'"
     />
     <button
       type="submit"
       class="search-button"
-      :disabled="!query.trim()"
+      :disabled="readonly || !query.trim()"
       aria-label="Search"
     >
       <PhMagnifyingGlass :size="22" weight="bold" />

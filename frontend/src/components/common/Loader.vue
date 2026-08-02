@@ -2,6 +2,30 @@
 </script>
 
 <template>
+
+
+
+<!-- <div class="container">
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  <div class="block"></div>
+  
+</div> -->
+
+
   <div class="loader">
     <div class="loader-wrapper">
       <span class="loader-letter">G</span>
@@ -19,10 +43,64 @@
       <span class="loader-letter">.</span>
       <div class="loader-circle"></div>
     </div>
-  </div>
+  </div> 
 </template>
 
 <style scoped>
+
+/* From Uiverse.io by JkHuger */ 
+.container {
+  width: 80px;
+  height: 100px;
+}
+
+.block {
+  position: relative;
+  box-sizing: border-box;
+  float: left;
+  margin: 0 10px 10px 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--text-muted);
+}
+
+.block:nth-child(4n+1) {
+  animation: wave_61 2s ease .0s infinite;
+}
+
+.block:nth-child(4n+2) {
+  animation: wave_61 2s ease .2s infinite;
+}
+
+.block:nth-child(4n+3) {
+  animation: wave_61 2s ease .4s infinite;
+}
+
+.block:nth-child(4n+4) {
+  animation: wave_61 2s ease .6s infinite;
+  margin-right: 0;
+}
+
+@keyframes wave_61 {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+
+  50% {
+    top: 30px;
+    opacity: .2;
+  }
+
+  100% {
+    top: 0;
+    opacity: 1;
+  }
+}
+
+
+
 .loader {
   position: relative;
   top: 0;
