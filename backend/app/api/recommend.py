@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.models.schema import RecommendRequest
 from app.services.filter.filter_service import filter_candidates
@@ -20,8 +20,11 @@ def recommend(data: RecommendRequest):
     ai_suggestions = suggest_anime(intent)
     suggested_titles = ai_suggestions.get("suggested_anime", [])
 
-    title_results = search_anime_by_titles(suggested_titles)
-    intent_results = search_anime_by_intent(intent)
+    try:
+        title_results = search_anime_by_titles(suggested_titles)
+        intent_results = search_anime_by_intent(intent)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     merged_results = merge_results(title_results, intent_results)
     normalized_results = normalize_anime_results(merged_results)

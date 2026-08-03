@@ -3,21 +3,32 @@ import { ref, onUnmounted } from 'vue'
 import AppHeader from '@/components/common/AppHeader.vue'
 import HomeView from './views/HomeView.vue'
 import ResultView from './views/ResultView.vue'
+import { recommend } from './api/client.js'
 
 const stage = ref('home')
 const searchQuery = ref('')
 const searchOrigin = ref(null)
 let loadTimer = null
 
-function handleSearch(query, rect) {
+async function handleSearch(query, rect) {
   searchQuery.value = query
   searchOrigin.value = rect
   stage.value = 'loading'
 
-  clearTimeout(loadTimer)
-  loadTimer = setTimeout(() => {
-    stage.value = 'results'
-  }, 10000)
+
+   try {
+    const data = await recommend(query)
+    console.log('API RESPONSE:', data)
+    console.log('RESULTS:', data.results)
+    // later: map data.results into resultCards and stage = 'results'
+  } catch (err) {
+    console.error('Search failed:', err)
+  }
+
+  // clearTimeout(loadTimer)
+  // loadTimer = setTimeout(() => {
+  //   stage.value = 'results'
+  // }, 10000)
 }
 
 onUnmounted(() => {

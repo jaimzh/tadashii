@@ -14,6 +14,12 @@ def build_recommendation_results(
 
     for ranking in rankings:
         mal_id = ranking.get("mal_id")
+
+        try:
+            mal_id = int(mal_id)
+        except (TypeError, ValueError):
+            continue
+
         anime = candidates_by_id.get(mal_id)
 
         if not anime:
