@@ -19,10 +19,18 @@ defineProps({
     default: 'N/A',
   },
 })
+
+const emit = defineEmits(['select'])
 </script>
 
 <template>
-  <article class="result-card">
+  <article
+    class="result-card"
+    role="button"
+    tabindex="0"
+    @click="emit('select')"
+    @keydown.enter="emit('select')"
+  >
     <div class="card-image">
       <img v-if="image" :src="image" alt="" />
       <span v-else class="image-placeholder" />
@@ -51,13 +59,19 @@ defineProps({
   background: var(--bg-light);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .result-card:hover {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: var(--ambient-glow);
+  transform: translateY(-2px);
+}
+
+.result-card:active {
+  transform: translateY(0);
 }
 
 .card-image {

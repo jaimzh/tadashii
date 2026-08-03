@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { PhMagnifyingGlass } from '@phosphor-icons/vue'
 
 const props = defineProps({
@@ -15,6 +15,13 @@ const props = defineProps({
 const emit = defineEmits(['submit'])
 
 const query = ref(props.value)
+
+watch(
+  () => props.value,
+  (v) => {
+    query.value = v
+  }
+)
 
 function handleSubmit() {
   if (props.readonly) return

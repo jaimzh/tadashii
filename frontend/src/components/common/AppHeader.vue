@@ -7,6 +7,7 @@ import SearchBar from './SearchBar.vue';
 
 const props = defineProps({
   isSearching: { type: Boolean, default: false },
+  isLoading: { type: Boolean, default: false },
   query: { type: String, default: '' },
   searchOrigin: { type: Object, default: null },
 });
@@ -14,10 +15,23 @@ const props = defineProps({
 const { theme, toggleTheme, initTheme } = useTheme();
 const navSearchEl = ref(null);
 const dimmed = ref(false);
+const emit = defineEmits(['search']);
 
 onMounted(() => {
   initTheme();
 });
+
+watch(
+  () => props.isLoading,
+  (loading) => {
+    dimmed.value = loading;
+  }
+);
+
+function onSearch(query) {
+  const rect = navSearchEl.value?.$el?.getBoundingClientRect();
+  emit('search', query, rect);
+}
 
 watch(
   () => props.isSearching,
@@ -59,9 +73,6 @@ watch(
         scaleY: 0.8,
         duration: 0.5,
         ease: 'power2.inOut',
-        onComplete: () => {
-          dimmed.value = true;
-        },
       }
     );
   }
@@ -76,7 +87,12 @@ watch(
     </div>
 
     <div class="nav-search-wrap" v-if="isSearching" :class="{ dimmed }">
-      <SearchBar ref="navSearchEl" :value="query" readonly />
+      <SearchBar
+        ref="navSearchEl"
+        :value="query"
+        :readonly="isLoading"
+        @submit="onSearch"
+      />
     </div>
 
     <!-- <SearchBar/> -->
