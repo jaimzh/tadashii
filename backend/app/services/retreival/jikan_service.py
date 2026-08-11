@@ -10,6 +10,59 @@ JIKAN_TIMEOUT_SECONDS = 10
 JIKAN_RETRY_COUNT = 2
 
 
+def _named_items(items: list | None) -> list[dict]:
+    normalized = []
+
+    for item in items or []:
+        if isinstance(item, str):
+            normalized.append({"name": item})
+        elif isinstance(item, dict):
+            normalized.append(item)
+
+    return normalized
+
+
+def adapt_anime_result(anime: dict) -> dict:
+    """Convert a jikan-edge search item to the Jikan v4 shape used downstream."""
+    if "malId" not in anime:
+        return anime
+
+    edge_images = anime.get("images") or {}
+    image_url = (
+        edge_images.get("large")
+        or edge_images.get("medium")
+        or anime.get("imageUrl")
+    )
+
+    return {
+        "mal_id": anime.get("malId"),
+        "url": anime.get("url"),
+        "title": anime.get("title"),
+        "title_english": anime.get("titleEnglish"),
+        "title_japanese": anime.get("titleJapanese"),
+        "title_synonyms": anime.get("titleSynonyms") or [],
+        "type": anime.get("type"),
+        "source": anime.get("source"),
+        "episodes": anime.get("episodes"),
+        "status": anime.get("status"),
+        "airing": anime.get("airing"),
+        "synopsis": anime.get("synopsis"),
+        "background": anime.get("background"),
+        "season": anime.get("season"),
+        "year": anime.get("year"),
+        "rating": anime.get("rating"),
+        "score": anime.get("score"),
+        "genres": _named_items(anime.get("genres")),
+        "explicit_genres": _named_items(anime.get("explicitGenres")),
+        "themes": _named_items(anime.get("themes")),
+        "demographics": _named_items(anime.get("demographics")),
+        "studios": _named_items(anime.get("studios")),
+        "images": {"jpg": {"image_url": anime.get("imageUrl"), "large_image_url": image_url}},
+        "trailer": {"url": anime.get("trailerUrl")},
+        "data_source": "jikan-edge",
+    }
+
+
 def normalize_search_terms(terms: list) -> list[str]:
     normalized = []
     seen = set()
@@ -42,8 +95,8 @@ def jikan_search_anime(query: str):
     for attempt in range(JIKAN_RETRY_COUNT + 1):
         try:
             response = requests.get(
-                f"{JIKAN_BASE_URL}/anime",
-                params={"q": query, "limit": JIKAN_SEARCH_LIMIT},
+                f"{JIKAN_BASE_URL.rstrip('/')}/anime",
+                params={"q": query},
                 timeout=JIKAN_TIMEOUT_SECONDS,
             )
 
@@ -53,9 +106,13 @@ def jikan_search_anime(query: str):
                 continue
 
             response.raise_for_status()
-            data = response.json()
+            payload = response.json()
+            results = payload.get("data")
 
-            return data.get("data", [])
+            if not isinstance(results, list):
+                raise RuntimeError("Anime API returned an invalid search response")
+
+            return [adapt_anime_result(anime) for anime in results[:JIKAN_SEARCH_LIMIT]]
         except requests.RequestException as exc:
             last_error = str(exc)
             time.sleep(1 + attempt)

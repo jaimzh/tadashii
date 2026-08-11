@@ -52,7 +52,7 @@ def normalize_anime(raw_anime: dict) -> AnimeCandidate:
         studios=get_names(raw_anime.get("studios")),
         image=get_image(raw_anime),
         trailer_url=get_trailer_url(raw_anime),
-        data_source="jikan",
+        data_source=raw_anime.get("data_source", "jikan"),
     )
 
 

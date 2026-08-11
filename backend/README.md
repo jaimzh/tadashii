@@ -286,11 +286,11 @@ Required or supported environment variables:
 ```env
 GEMINI_API_KEY=your_api_key_here
 GEMINI_MODEL=gemini-3.1-flash-lite
-JIKAN_BASE_URL=https://api.jikan.moe/v4
+JIKAN_BASE_URL=https://jikan-edge.lucas-hdo.workers.dev/v1
 JIKAN_SEARCH_LIMIT=10
 ```
 
-`JIKAN_SEARCH_LIMIT` controls how many results Jikan returns for each search query.
+`JIKAN_SEARCH_LIMIT` controls how many jikan-edge results are retained from each search query. The retrieval service adapts jikan-edge's camelCase search results to the internal Jikan-v4-shaped dictionaries expected by the rest of the pipeline.
 
 ## Running The Server
 
