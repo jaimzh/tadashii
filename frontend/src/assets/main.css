@@ -83,3 +83,54 @@ body {
 [data-theme="zen"] .hero-glow {
   display: none;
 }
+
+.theme-transition #app {
+  transform-origin: center;
+  animation: themeEnter 0.4s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes themeEnter {
+  from {
+    opacity: 0.55;
+    transform: scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+  animation: themeCircleReveal 0.65s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes themeCircleReveal {
+  from {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+  to {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition #app {
+    animation: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
