@@ -33,6 +33,13 @@ function toCardResult(recommendation) {
   }
 }
 
+function goHome() {
+  clearTimeout(loadTimer)
+  stage.value = 'home'
+  searchQuery.value = ''
+  searchOrigin.value = null
+}
+
 async function handleSearch(query, rect) {
   searchQuery.value = query
   searchOrigin.value = rect
@@ -77,6 +84,7 @@ onUnmounted(() => {
       :query="searchQuery"
       :search-origin="searchOrigin"
       @search="handleSearch"
+      @home="goHome"
     />
     <HomeView
       v-if="stage === 'home' || stage === 'loading'"

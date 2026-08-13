@@ -5,6 +5,7 @@
   --bg-base: hsl(0, 0%, 0%);
   --bg-light: hsl(0, 0%, 3%);
   --bg-main: color-mix(in srgb, var(--bg-base) 86%, transparent);
+  --input-bg: var(--bg-base);
 
   --text-main: hsl(0, 0%, 90%);
   --text-muted: hsl(0, 0%, 70%);
@@ -32,6 +33,7 @@
   --bg-base: hsl(0, 0%, 98%);
   --bg-light: hsl(0, 0%, 100%);
   --bg-main: color-mix(in srgb, var(--bg-base) 86%, transparent);
+  --input-bg: var(--bg-light);
 
   --text-main: hsl(0, 0%, 10%);
   --text-muted: hsl(235, 9%, 25%);
@@ -47,10 +49,11 @@
 [data-theme="zen"] {
   --bg-dark: hsl(40, 38%, 76%);
   --bg-base: hsl(41, 52%, 87%);
-  --bg-light: hsl(42, 55%, 93%);
+  --bg-light: hsl(41, 55%, 89%);
   --bg-main: color-mix(in srgb, var(--bg-base) 88%, transparent);
+  --input-bg: var(--bg-light);
 
-  --text-main:  hsl(26, 14%, 10%);
+  --text-main:  hsl(28, 25%, 13%);
 
      
 

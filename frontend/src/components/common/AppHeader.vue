@@ -16,7 +16,7 @@ const props = defineProps({
 const { theme, toggleTheme, initTheme } = useTheme();
 const navSearchEl = ref(null);
 const dimmed = ref(false);
-const emit = defineEmits(['search']);
+const emit = defineEmits(['search', 'home']);
 
 onMounted(() => {
   initTheme();
@@ -82,9 +82,9 @@ watch(
 
 <template>
   <header class="app-header">
-    <div class="brand">
+    <button class="brand" type="button" aria-label="Go to home" @click="emit('home')">
       <TadashiiLogo compact :animated="false" />
-    </div>
+    </button>
 
     <div class="nav-search-wrap" v-if="isSearching" :class="{ dimmed }">
       <SearchBar
@@ -119,7 +119,7 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 1.5rem 1rem 0.75rem 1rem;
   height: 4rem;
   background-color: var(--bg-main);
   backdrop-filter: blur(10px);
@@ -135,6 +135,17 @@ watch(
   align-items: center;
   gap: 0.5rem;
   min-width: 110px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .nav-search-wrap.dimmed {

@@ -36,7 +36,7 @@ function handleSearch(query) {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  margin-top:-4rem ;
+  margin-top:-5rem ;
 
   
 }

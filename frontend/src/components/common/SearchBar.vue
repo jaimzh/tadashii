@@ -136,7 +136,7 @@ function surpriseMe() {
   border-radius: 50px 0 0 50px;
   font-size: var(--font-size-base);
   outline: none;
-  background: var(--bg-base);
+  background: var(--input-bg, var(--bg-base));
   color: var(--text-main);
 }
 
@@ -146,7 +146,7 @@ function surpriseMe() {
   align-items: stretch;
   overflow: hidden;
   border-radius: 0 50px 50px 0;
-  background: var(--bg-base);
+  background: var(--input-bg, var(--bg-base));
 }
 
 .surprise-button,

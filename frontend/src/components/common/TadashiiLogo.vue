@@ -1,6 +1,6 @@
 <script setup>
 import { getCurrentInstance, ref } from 'vue'
-import { PhPaintBrush } from '@phosphor-icons/vue'
+
 
 defineProps({
   compact: { type: Boolean, default: false },
@@ -151,7 +151,7 @@ function replay() {
 .logo-graphic {
   position: relative;
   transform-origin: center;
-  animation: logoEnter .45s cubic-bezier(.16, 1, .3, 1) both;
+  animation: logoEnter 2s cubic-bezier(.16, 1, .3, 1) both;
 }
 
 @keyframes logoEnter {
@@ -226,8 +226,8 @@ function replay() {
 
   .caption {
     opacity:0;
-    animation: fadeUp .35s cubic-bezier(.16, 1, .3, 1) both;
-    animation-delay: 1.45s;
+    animation: fadeUp 1s cubic-bezier(.16, 1, .3, 1) both;
+    animation-delay: 1.2s;
   }
   @keyframes fadeUp {
     from { opacity:0; transform: translateY(8px) scale(.98); filter: blur(3px); }
