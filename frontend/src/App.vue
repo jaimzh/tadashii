@@ -1,15 +1,30 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import AppHeader from '@/components/common/AppHeader.vue'
 import HomeView from './views/HomeView.vue'
 import ResultView from './views/ResultView.vue'
 import { recommend } from './api/client.js'
+import Aurora from './components/common/Aurora.vue'
+import { useTheme } from '@/coposables/useTheme'
 
 const stage = ref('home')
 const searchQuery = ref('')
 const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
+const { theme } = useTheme()
+
+const auroraColors = computed(() => {
+  if (theme.value === 'light') {
+    return ['#DCEEFF', '#4A9DFF', '#F7FBFF']
+  }
+
+  if (theme.value === 'zen') {
+    return ['#456B8C', '#935B37', '#E5D2B4']
+  }
+
+  return ['#071A33', '#007BFF', '#182B46']
+})
 
 function toCardResult(recommendation) {
   const anime = recommendation.anime
@@ -77,7 +92,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="wrapper">
+  <div class="main">
+     <!-- <Aurora
+      class="app-aurora"
+      :color-stops="auroraColors"
+      :blend="0.5"
+      :amplitude="1"
+      :speed="0.5"
+    /> -->
+    <div class="wrapper">
     <AppHeader
       :is-searching="stage !== 'home'"
       :is-loading="stage === 'loading'"
@@ -93,6 +116,8 @@ onUnmounted(() => {
     />
     <ResultView v-else-if="stage === 'results'" :results="results" />
   </div>
+  </div>
+  
 </template>
 
 <style>
@@ -104,5 +129,22 @@ onUnmounted(() => {
   box-sizing: border-box;
   padding-left: 20px;
   padding-right: 20px;
+}
+
+.main {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+}
+
+.app-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .45;
 }
 </style>

@@ -33,6 +33,8 @@ function handleSearch(query) {
 
 <style scoped>
 .home-view {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

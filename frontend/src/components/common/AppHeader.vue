@@ -121,7 +121,7 @@ watch(
   align-items: center;
   padding: 1.5rem 1rem 0.75rem 1rem;
   height: 4rem;
-  background-color: var(--bg-main);
+  background-color: none;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: background-color 0.3s ease, opacity 0.3s ease;

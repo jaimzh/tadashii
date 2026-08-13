@@ -4,6 +4,7 @@ import { ref } from 'vue'
 const themes = ['dark', 'light', 'zen']
 const theme = ref('dark')
 let themeTransitionTimer
+let activeViewTransition = null
 
 function playThemeTransition() {
   const root = document.documentElement
@@ -25,7 +26,7 @@ export function useTheme() {
     localStorage.setItem('user-theme', newTheme)
   }
 
-  const toggleTheme = (event) => {
+  const toggleTheme = async (event) => {
     const currentIndex = themes.indexOf(theme.value)
     const nextTheme = themes[(currentIndex + 1) % themes.length]
 
@@ -37,19 +38,44 @@ export function useTheme() {
     }
 
     const buttonRect = event?.currentTarget?.getBoundingClientRect()
-    const x = buttonRect ? buttonRect.left + buttonRect.width / 2 : window.innerWidth / 2
-    const y = buttonRect ? buttonRect.top + buttonRect.height / 2 : window.innerHeight / 2
-    const radius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    )
+    const viewport = window.visualViewport
+    const width = viewport?.width ?? window.innerWidth
+    const height = viewport?.height ?? window.innerHeight
+    const x = buttonRect ? buttonRect.left + buttonRect.width / 2 : width / 2
+    const y = buttonRect ? buttonRect.top + buttonRect.height / 2 : height / 2
+    const radius = Math.max(
+      Math.hypot(x, y),
+      Math.hypot(width - x, y),
+      Math.hypot(x, height - y),
+      Math.hypot(width - x, height - y),
+    ) + 16
 
-    const root = document.documentElement
-    root.style.setProperty('--theme-reveal-x', `${x}px`)
-    root.style.setProperty('--theme-reveal-y', `${y}px`)
-    root.style.setProperty('--theme-reveal-radius', `${radius}px`)
+    activeViewTransition?.skipTransition()
+    const transition = document.startViewTransition(() => applyTheme(nextTheme))
+    activeViewTransition = transition
 
-    document.startViewTransition(() => applyTheme(nextTheme))
+    try {
+      await transition.ready
+      const reveal = document.documentElement.animate(
+        {
+          clipPath: [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${radius}px at ${x}px ${y}px)`,
+          ],
+        },
+        {
+          duration: 1050,
+          easing: 'cubic-bezier(.16, 1, .3, 1)',
+          fill: 'both',
+          pseudoElement: '::view-transition-new(root)',
+        },
+      )
+      await reveal.finished
+    } catch {
+      // A newer theme click can intentionally interrupt this transition.
+    } finally {
+      if (activeViewTransition === transition) activeViewTransition = null
+    }
   }
 
   
