@@ -1,5 +1,5 @@
 <script setup>
-import { PhStar } from '@phosphor-icons/vue'
+import { PhList, PhStar } from '@phosphor-icons/vue'
 
 defineProps({
   title: {
@@ -18,6 +18,10 @@ defineProps({
     type: String,
     default: 'N/A',
   },
+  synopsis: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['select'])
@@ -30,19 +34,31 @@ const emit = defineEmits(['select'])
     tabindex="0"
     @click="emit('select')"
     @keydown.enter="emit('select')"
+    @keydown.space.prevent="emit('select')"
   >
     <div class="card-image">
-      <img v-if="image" :src="image" alt="" />
-      <span v-else class="image-placeholder" />
+      <img v-if="image" :src="image" :alt="`${title} poster`" />
+      <div v-else class="image-placeholder" aria-hidden="true">
+        <span class="placeholder-mark">正</span>
+        <span class="placeholder-copy">Poster artwork</span>
+      </div>
+      <span class="image-sheen" aria-hidden="true" />
     </div>
 
     <div class="card-body">
-      <h3 class="card-title">{{ title }}</h3>
+      <div class="title-row">
+        <h3 class="card-title">{{ title }}</h3>
+      </div>
+
+      <p v-if="synopsis" class="card-synopsis">{{ synopsis }}</p>
 
       <div class="card-meta">
-        <span class="meta-item">{{ episodes }} episodes</span>
+        <span class="meta-item episodes">
+          <PhList :size="17" weight="bold" />
+          {{ episodes }} eps
+        </span>
         <span class="meta-item rating">
-          <PhStar :size="16" weight="fill" class="star-icon" />
+          <PhStar :size="17" weight="fill" />
           {{ rating }}
         </span>
       </div>
@@ -52,38 +68,49 @@ const emit = defineEmits(['select'])
 
 <style scoped>
 .result-card {
+  width: 100%;
+  min-height: 150px;
   display: flex;
-  flex-direction: row;
+  align-items: stretch;
   gap: 1rem;
-  padding: 1rem;
+  padding: 0.7rem;
   background: var(--bg-light);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  overflow: hidden;
+  outline: none;
   cursor: pointer;
+  transition: transform 180ms ease;
 }
 
 .result-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
-  box-shadow: var(--ambient-glow);
   transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border-color));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .result-card:active {
-  transform: translateY(0);
+  transform: translateY(-2px) scale(0.99);
+}
+
+.result-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
 }
 
 .card-image {
-  width: 88px;
-  height: 120px;
-  flex-shrink: 0;
-  border-radius: 8px;
+  position: relative;
+  width: 96px;
+  flex: 0 0 96px;
+  aspect-ratio: 2 / 3;
+  min-height: 0;
+  border-radius: 9px;
   overflow: hidden;
-  background: var(--bg-dark);
+  background: color-mix(in srgb, var(--bg-light) 88%, var(--accent));
 }
 
 .card-image img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -91,51 +118,119 @@ const emit = defineEmits(['select'])
 }
 
 .image-placeholder {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
   width: 100%;
   height: 100%;
   background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent) 25%, transparent),
-    transparent
+    145deg,
+    color-mix(in srgb, var(--accent) 30%, var(--bg-light)),
+    var(--bg-light) 48%,
+    color-mix(in srgb, #7c3aed 24%, var(--bg-dark))
   );
+  color: var(--text-muted);
+}
+
+.placeholder-mark {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--text-main) 28%, transparent);
+}
+
+.placeholder-copy {
+  display: none;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.image-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%, rgba(0, 0, 0, 0.12));
 }
 
 .card-body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 1rem;
+  padding: 0.35rem 0.25rem 0.35rem 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
   min-width: 0;
 }
 
 .card-title {
+  min-width: 0;
   font-size: var(--font-size-md);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
-  line-height: 1.3;
+  line-height: 1.25;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.card-synopsis {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
 .card-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: var(--font-size-sm);
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: max-content;
+  padding: 0.32rem 0.48rem;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg-light) 84%, transparent);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
   color: var(--text-muted);
 }
 
-.rating .star-icon {
+.rating svg {
   color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .result-card {
+    min-height: 138px;
+    gap: 0.8rem;
+    padding: 0.6rem;
+  }
+
+  .card-image {
+    width: 84px;
+    flex-basis: 84px;
+  }
+
+  .card-body {
+    padding-right: 0.1rem;
+  }
 }
 </style>

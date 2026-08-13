@@ -1,0 +1,17 @@
+export const surpriseQueries = [
+  'A cozy fantasy adventure with lovable characters',
+  'A clever mystery that keeps me guessing',
+  'A funny slice-of-life anime with a warm heart',
+  'An emotional story that will make me cry',
+  'A high-energy sports anime with great teamwork',
+  'A dark psychological thriller',
+  'A wholesome romance with minimal drama',
+  'An epic adventure with a unique world',
+  'A short anime I can finish in a weekend',
+  'A stylish sci-fi story with great animation',
+  'An underdog story with satisfying character growth',
+  'A relaxing anime with beautiful scenery',
+  'A supernatural comedy with chaotic characters',
+  'A mature historical drama',
+  'A fast-paced action anime with smart fights',
+]

@@ -1,6 +1,7 @@
 // src/composables/useTheme.js
 import { ref } from 'vue'
 
+const themes = ['dark', 'light', 'zen']
 const theme = ref('dark')
 
 export function useTheme() {
@@ -11,13 +12,8 @@ export function useTheme() {
   }
 
   const toggleTheme = () => {
-    let nextTheme
-
-    if (theme.value === 'dark') {
-      nextTheme = 'light'
-    } else {
-      nextTheme = 'dark'
-    }
+    const currentIndex = themes.indexOf(theme.value)
+    const nextTheme = themes[(currentIndex + 1) % themes.length]
     applyTheme(nextTheme)
   }
 
@@ -25,7 +21,7 @@ export function useTheme() {
   const initTheme = () => {
     const savedTheme = localStorage.getItem('user-theme')
 
-    if (savedTheme) {
+    if (themes.includes(savedTheme)) {
       applyTheme(savedTheme)
     } else {
       const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches

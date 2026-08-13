@@ -21,6 +21,7 @@ function toCardResult(recommendation) {
     image: anime.image || '',
     episodes: anime.episodes ? String(anime.episodes) : 'N/A',
     rating: anime.score ? String(anime.score) : 'N/A',
+    type: anime.type || 'TV',
     year: anime.year ? String(anime.year) : '',
     genres: anime.genres.join(', '),
     studio: anime.studios.join(', '),
@@ -88,12 +89,12 @@ onUnmounted(() => {
 
 <style>
 .wrapper {
-  max-width: 1200px;
+  max-width: 1120px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
   box-sizing: border-box;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 </style>

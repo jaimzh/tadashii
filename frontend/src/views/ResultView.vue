@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import ResultCard from '@/components/common/ResultCard.vue'
 import ResultModal from '@/components/common/ResultModal.vue'
+import { getTrailer } from '@/api/client.js'
 
 defineProps({
   results: {
@@ -11,6 +12,28 @@ defineProps({
 })
 
 const selected = ref(null)
+
+async function selectResult(result) {
+  selected.value = {
+    ...result,
+    trailerLoading: true,
+    trailerUrl: null,
+  }
+
+  try {
+    const trailer = await getTrailer(result.id)
+
+    if (selected.value?.id === result.id) {
+      selected.value.trailerUrl = trailer.trailer_url
+    }
+  } catch (error) {
+    console.error('Trailer lookup failed:', error)
+  } finally {
+    if (selected.value?.id === result.id) {
+      selected.value.trailerLoading = false
+    }
+  }
+}
 </script>
 
 <template>
@@ -23,7 +46,8 @@ const selected = ref(null)
         :image="result.image"
         :episodes="result.episodes"
         :rating="result.rating"
-        @select="selected = result"
+        :synopsis="result.synopsis"
+        @select="selectResult(result)"
       />
     </div>
 
@@ -49,13 +73,20 @@ const selected = ref(null)
 
 .result-view {
   width: 100%;
-  padding: 2rem 0;
+  padding: 1.5rem 0 2rem;
   animation: fade-up 0.5s ease;
 }
 
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -2,8 +2,9 @@
 import { onMounted, ref, watch, nextTick } from 'vue';
 import gsap from 'gsap';
 import { useTheme } from '@/coposables/useTheme';
-import { PhSun, PhMoon, PhQuestion } from '@phosphor-icons/vue';
+import { PhLeaf, PhSun, PhMoon, PhQuestion } from '@phosphor-icons/vue';
 import SearchBar from './SearchBar.vue';
+import TadashiiLogo from './TadashiiLogo.vue';
 
 const props = defineProps({
   isSearching: { type: Boolean, default: false },
@@ -82,8 +83,7 @@ watch(
 <template>
   <header class="app-header">
     <div class="brand">
-      <span class="app-name">🔥</span>
-      <span class="app-name">Tadashii</span>
+      <TadashiiLogo compact :animated="false" />
     </div>
 
     <div class="nav-search-wrap" v-if="isSearching" :class="{ dimmed }">
@@ -97,8 +97,14 @@ watch(
 
     <!-- <SearchBar/> -->
     <div class="actions">
-      <button @click="toggleTheme" class="icon-btn" aria-label="Toggle theme">
-        <PhSun v-if="theme === 'dark'" :size="22" weight="bold" />
+      <button
+        @click="toggleTheme"
+        class="icon-btn"
+        :aria-label="`Current theme: ${theme}. Change theme`"
+        :title="`Theme: ${theme}`"
+      >
+        <PhSun v-if="theme === 'dark'" :size="22"  />
+        <PhLeaf v-else-if="theme === 'light'" :size="20"  />
         <PhMoon v-else :size="20" />
       </button>
       <button class="icon-btn" aria-label="Help">
@@ -113,29 +119,22 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  height: 5rem;
+  padding: 0.75rem 1rem;
+  height: 4rem;
   background-color: var(--bg-main);
-  border: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  transition: background-color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
   position: sticky;
   top: 0;
   z-index: 100;
-}
-
-.app-name {
-  font-weight: bold;
-  font-size: var(--font-size-lg);
-  color: var(--text-main);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 140px;
+  min-width: 110px;
 }
 
 .nav-search-wrap.dimmed {
@@ -154,7 +153,7 @@ watch(
 .actions {
   display: flex;
   gap: 0.5rem;
-  min-width: 140px;
+  min-width: 110px;
   justify-content: flex-end;
 }
 
@@ -165,8 +164,8 @@ watch(
   background: var(--bg-light);
   color: var(--text-muted);
   border: 1px solid var(--border-color);
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;

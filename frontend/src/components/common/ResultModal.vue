@@ -1,7 +1,8 @@
 <script setup>
-import { PhStar, PhX, PhPlay } from '@phosphor-icons/vue'
+import { computed } from 'vue'
+import { PhArrowSquareOut, PhList, PhPlay, PhStar, PhX } from '@phosphor-icons/vue'
 
-defineProps({
+const props = defineProps({
   result: {
     type: Object,
     required: true,
@@ -9,254 +10,420 @@ defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const genres = computed(() =>
+  (props.result.genres || '')
+    .split(',')
+    .map((genre) => genre.trim())
+    .filter(Boolean),
+)
 </script>
 
 <template>
   <div class="modal-overlay" @click.self="emit('close')">
-    <div class="modal-shell">
-      <button class="close-btn" @click="emit('close')" aria-label="Close">
-        <PhX :size="22" />
+    <article class="modal-shell" role="dialog" aria-modal="true" :aria-label="result.title">
+      <button class="close-btn" @click="emit('close')" aria-label="Close details">
+        <PhX :size="18" weight="bold" />
       </button>
 
       <div class="modal-content">
         <div class="modal-poster">
-          <img v-if="result.image" :src="result.image" alt="" />
-          <span v-else class="poster-placeholder" />
+          <img v-if="result.image" :src="result.image" :alt="`${result.title} poster`" />
+          <div v-else class="poster-placeholder">Poster unavailable</div>
         </div>
 
         <div class="modal-info">
-          <h2 class="modal-title">{{ result.title }}</h2>
-          <p v-if="result.japaneseName" class="japanese-name">
-            {{ result.japaneseName }}
-          </p>
-
-          <div class="modal-meta-row">
-            <span v-if="result.year" class="chip">{{ result.year }}</span>
-            <span v-if="result.duration" class="chip">{{ result.duration }}</span>
-            <span v-if="result.genres" class="chip">{{ result.genres }}</span>
-            <span v-if="result.studio" class="chip">{{ result.studio }}</span>
-          </div>
-
-          <div class="rating-row">
-            <PhStar :size="18" weight="fill" class="star-icon" />
-            <span class="rating-value">{{ result.rating }}</span>
-            <span v-if="result.episodes" class="episode-count">
-              · {{ result.episodes }} episodes
-            </span>
-          </div>
+          <header class="modal-header">
+            <div class="title-block">
+              <h2 class="modal-title">{{ result.title }}</h2>
+              <p v-if="result.japaneseName" class="japanese-name">
+                {{ result.japaneseName }}
+              </p>
+            </div>
+          </header>
 
           <p v-if="result.synopsis" class="synopsis">{{ result.synopsis }}</p>
 
+          <div class="quick-stats">
+            <span>
+              <PhStar :size="17" weight="fill" class="star-icon" />
+              {{ result.rating }}
+            </span>
+            <span>
+              <PhList :size="17" weight="bold" />
+              {{ result.episodes }} eps
+            </span>
+          </div>
+
+          <dl class="details-grid">
+            <div v-if="result.year" class="detail-item">
+              <dt>Year</dt>
+              <dd>{{ result.year }}</dd>
+            </div>
+            <div v-if="result.type" class="detail-item">
+              <dt>Format</dt>
+              <dd>{{ result.type }}</dd>
+            </div>
+            <div v-if="result.studio" class="detail-item detail-wide">
+              <dt>Studio</dt>
+              <dd>{{ result.studio }}</dd>
+            </div>
+            <div v-if="genres.length" class="detail-item detail-wide genre-detail">
+              <dt>Genres</dt>
+              <dd class="genre-list">
+                <span v-for="genre in genres" :key="genre" class="genre-chip">
+                  {{ genre }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+
           <div v-if="result.reason" class="reason">
-            <span class="reason-label">Why this one:</span>
+            <span class="reason-label">Why it matches</span>
             <p>{{ result.reason }}</p>
           </div>
 
-          <button class="watch-btn">
-            <PhPlay :size="18" weight="fill" />
-            Watch
-          </button>
+          <div class="modal-actions">
+            <a
+              v-if="result.trailerUrl"
+              class="watch-btn trailer-btn"
+              :href="result.trailerUrl"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <PhPlay :size="16" weight="fill" />
+              Watch trailer
+            </a>
+
+            <span v-else-if="result.trailerLoading" class="trailer-loading">
+              Finding trailer…
+            </span>
+
+            <a
+              v-if="result.url"
+              class="watch-btn secondary-btn"
+              :href="result.url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <PhArrowSquareOut :size="16" weight="bold" />
+              View anime
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </article>
   </div>
 </template>
 
 <style scoped>
 .modal-overlay {
+  --modal-surface: color-mix(in srgb, var(--bg-base) 96%, var(--bg-light));
+  --modal-elevated: color-mix(in srgb, var(--bg-light) 82%, var(--bg-base));
+  --modal-text: var(--text-main);
+  --modal-muted: color-mix(in srgb, var(--text-muted) 88%, var(--text-main));
+  --modal-border: var(--border-color);
+
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 200;
-  padding: 1rem;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--bg-dark) 78%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .modal-shell {
   position: relative;
-  background: var(--bg-light);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  max-width: 760px;
-  width: 100%;
-  max-height: 85vh;
+  width: min(100%, 880px);
+  max-height: min(86vh, 680px);
   overflow-y: auto;
-  animation: modal-in 0.25s ease;
+  padding: 2rem;
+  border: 1px solid var(--modal-border);
+  border-radius: 28px;
+  background: var(--modal-surface);
+  color: var(--modal-text);
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--text-main) 3%, transparent) inset;
+  animation: modal-in 220ms ease-out;
 }
 
 @keyframes modal-in {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    transform: translateY(14px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 .close-btn {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
   border-radius: 50%;
-  border: 1px solid var(--border-color);
-  background: var(--bg-light);
-  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-main) 8%, transparent);
+  color: var(--modal-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .close-btn:hover {
-  color: var(--text-main);
-  border-color: var(--text-main);
+  background: color-mix(in srgb, var(--text-main) 14%, transparent);
+  color: var(--modal-text);
+  transform: rotate(4deg);
 }
 
 .modal-content {
-  display: flex;
-  flex-direction: row;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(210px, 270px) minmax(0, 1fr);
+  gap: clamp(1.75rem, 3.5vw, 3rem);
 }
 
 .modal-poster {
-  flex-shrink: 0;
-  width: 200px;
-  height: 280px;
-  border-radius: 10px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
   overflow: hidden;
-  background: var(--bg-dark);
+  border-radius: 16px;
+  background: var(--modal-elevated);
 }
 
 .modal-poster img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
+  object-fit: cover;
 }
 
 .poster-placeholder {
-  display: block;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--accent) 30%, transparent),
-    transparent
-  );
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: var(--modal-muted);
+  background: linear-gradient(145deg, var(--modal-elevated), var(--modal-surface));
 }
 
 .modal-info {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+}
+
+.modal-header {
+  padding-right: 2rem;
+}
+
+.title-block {
+  min-width: 0;
 }
 
 .modal-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--text-main);
-  line-height: 1.2;
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--modal-text);
 }
 
 .japanese-name {
+  margin-top: 0.45rem;
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
+  color: var(--modal-muted);
 }
 
-.modal-meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.chip {
-  padding: 0.25rem 0.6rem;
-  border-radius: 50px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-base);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-.rating-row {
+.quick-stats {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  color: var(--text-muted);
+  gap: 1.25rem;
   font-size: var(--font-size-sm);
+  color: var(--modal-text);
+}
+
+.quick-stats span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .star-icon {
   color: var(--accent);
 }
 
-.rating-value {
-  color: var(--text-main);
-  font-weight: 600;
-}
-
-.episode-count {
-  margin-left: 0.25rem;
-}
-
 .synopsis {
+  max-width: 68ch;
+  color: var(--modal-muted);
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 2rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.detail-wide {
+  grid-column: 1 / -1;
+}
+
+.detail-item dt {
+  flex: 0 0 auto;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--modal-text);
+}
+
+.detail-item dd {
+  min-width: 0;
+  color: var(--modal-muted);
+  font-size: var(--font-size-sm);
+}
+
+.genre-detail {
+  align-items: center;
+}
+
+.genre-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.genre-chip {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--modal-border);
+  border-radius: 999px;
+  color: var(--modal-text);
+  background: var(--modal-elevated);
+  font-size: var(--font-size-xs);
 }
 
 .reason {
-  padding: 0.75rem;
+  padding: 0.9rem 1rem;
   border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-base);
+  background: color-mix(in srgb, var(--text-main) 4%, transparent);
 }
 
 .reason-label {
   font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 700;
+  color: var(--modal-text);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .reason p {
   margin-top: 0.35rem;
+  color: var(--modal-muted);
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
 .watch-btn {
-  margin-top: auto;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 50px;
+  gap: 0.45rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  background: var(--text-main);
+  color: var(--bg-base);
+  font-size: var(--font-size-sm);
+  font-weight: 650;
+  text-decoration: none;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.trailer-btn {
   background: var(--accent);
   color: white;
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: filter 0.2s ease;
+}
+
+.trailer-btn:hover {
+  background: color-mix(in srgb, var(--accent) 86%, white);
+}
+
+.secondary-btn {
+  background: var(--text-main);
+  color: var(--bg-base);
+}
+
+.trailer-loading {
+  color: var(--modal-muted);
+  font-size: var(--font-size-xs);
 }
 
 .watch-btn:hover {
-  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.secondary-btn:hover {
+  background: color-mix(in srgb, var(--text-main) 92%, var(--bg-base));
+}
+
+@media (max-width: 720px) {
+  .modal-overlay {
+    align-items: start;
+    padding: 0.75rem;
+  }
+
+  .modal-shell {
+    max-height: calc(100vh - 1.5rem);
+    padding: 1.25rem;
+    border-radius: 20px;
+  }
+
+  .modal-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .modal-poster {
+    width: min(68vw, 260px);
+    justify-self: center;
+  }
+
+  .modal-header {
+    padding-right: 1.75rem;
+  }
+}
+
+@media (max-width: 440px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-wide {
+    grid-column: auto;
+  }
 }
 </style>

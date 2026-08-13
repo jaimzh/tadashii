@@ -1,15 +1,14 @@
 <script setup>
-import heroSvg from '@/assets/Group 5.svg'
+import TadashiiLogo from '@/components/common/TadashiiLogo.vue'
 </script>
 
 <template>
   <section class="animated-hero">
-    <!-- <img src="http://localhost:3000/cdn/testss.png" alt=""> -->
-    <img :src="heroSvg" alt="" class="hero-image" />
+    <TadashiiLogo class="hero-image" />
 
     <p class="hero-subtitle">
       Let's find the right story for you! <br />
-      Describe what you're in the mood for
+     
     </p>
     <!-- <div class="hero-glow"></div> -->
   </section>
@@ -17,27 +16,31 @@ import heroSvg from '@/assets/Group 5.svg'
 
 <style scoped>
 .animated-hero {
-   border: 1px solid red;
   width: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
-  padding: 24px 24px;
+  gap: 1.25rem;
+  padding: 16px;
   overflow: hidden;
 }
 
+.hero-image {
+  width: min(100%, 320px);
+}
 
 .hero-subtitle {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-md);
+  line-height: 1.55;
+  text-align: center;
   color: var(--text-muted);
-  margin: 0 0 32px;
+  margin: 0 0 20px;
   background: linear-gradient(
     90deg,
     var(--text-muted),
-    color-mix(in srgb, var(--accent) 30%, white),
+    color-mix(in srgb, var(--accent-glow) 70%, white),
     var(--text-muted)
   );
   background-clip: text;

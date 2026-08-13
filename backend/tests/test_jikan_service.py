@@ -57,6 +57,30 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         anime = {"mal_id": 20, "title": "Naruto"}
         self.assertIs(jikan_service.adapt_anime_result(anime), anime)
 
+    def test_gets_trailer_from_anime_detail(self):
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            "data": {
+                "malId": 1735,
+                "trailer": {
+                    "url": "https://www.youtube.com/watch?v=1dy2zPPrKD0",
+                },
+            }
+        }
+
+        with patch.object(jikan_service.requests, "get", return_value=response) as get:
+            trailer_url = jikan_service.get_anime_trailer(1735)
+
+        self.assertTrue(get.call_args.args[0].endswith("/v1/anime/1735"))
+        self.assertEqual(trailer_url, "https://www.youtube.com/watch?v=1dy2zPPrKD0")
+
+    def test_returns_none_when_anime_has_no_trailer(self):
+        response = Mock(status_code=200)
+        response.json.return_value = {"data": {"malId": 20, "trailer": None}}
+
+        with patch.object(jikan_service.requests, "get", return_value=response):
+            self.assertIsNone(jikan_service.get_anime_trailer(20))
+
 
 if __name__ == "__main__":
     unittest.main()

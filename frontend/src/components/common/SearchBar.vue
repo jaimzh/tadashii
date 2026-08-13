@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { PhMagnifyingGlass } from '@phosphor-icons/vue'
+import { PhDiceFive, PhMagnifyingGlass } from '@phosphor-icons/vue'
+import { surpriseQueries } from '@/data/surpriseQueries'
 
 const props = defineProps({
   value: {
@@ -29,6 +30,14 @@ function handleSubmit() {
     emit('submit', query.value.trim())
   }
 }
+
+function surpriseMe() {
+  if (props.readonly || !surpriseQueries.length) return
+
+  const availableQueries = surpriseQueries.filter((item) => item !== query.value)
+  const choices = availableQueries.length ? availableQueries : surpriseQueries
+  query.value = choices[Math.floor(Math.random() * choices.length)]
+}
 </script>
 
 <template>
@@ -41,14 +50,26 @@ function handleSubmit() {
       :readonly="readonly"
       :placeholder="readonly ? '' : 'What do you feel like watching?'"
     />
-    <button
-      type="submit"
-      class="search-button"
-      :disabled="readonly || !query.trim()"
-      aria-label="Search"
-    >
-      <PhMagnifyingGlass :size="22" weight="bold" />
-    </button>
+    <div class="search-actions">
+      <button
+        type="button"
+        class="surprise-button"
+        :disabled="readonly"
+        aria-label="Surprise me"
+        title="Surprise me"
+        @click="surpriseMe"
+      >
+        <PhDiceFive :size="22" weight="bold" />
+      </button>
+      <button
+        type="submit"
+        class="search-button"
+        :disabled="readonly || !query.trim()"
+        aria-label="Search"
+      >
+        <PhMagnifyingGlass :size="22" weight="bold" />
+      </button>
+    </div>
   </form>
 </template>
 
@@ -62,7 +83,7 @@ function handleSubmit() {
   position: relative;
   display: flex;
   width: 100%;
-  max-width: 600px;
+  max-width: 520px;
   margin: 0 auto;
   border-radius: 50px;
   padding: 1px;
@@ -102,20 +123,77 @@ function handleSubmit() {
 }
 
 .search-input,
-.search-button {
+.search-actions {
   position: relative;
   z-index: 3;
 }
 
 .search-input {
   flex: 1;
-  padding: 20px 28px;
+  min-width: 0;
+  padding: 14px 20px;
   border: none;
   border-radius: 50px 0 0 50px;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   outline: none;
   background: var(--bg-base);
   color: var(--text-main);
+}
+
+.search-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: 0 50px 50px 0;
+  background: var(--bg-base);
+}
+
+.surprise-button,
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  
+}
+
+.surprise-button {
+  padding: 14px 8px;
+}
+
+.surprise-button:not(:disabled):hover,
+.search-button:not(:disabled):hover {
+  color: color-mix(in srgb, var(--accent) 82%, white);
+}
+
+.surprise-button svg,
+.search-button svg {
+  transition: transform 0.2s ease;
+}
+
+.surprise-button:not(:disabled):hover svg {
+  transform: translateY(-2px) rotate(12deg);
+}
+
+.search-button:not(:disabled):hover svg {
+  transform: translateY(-2px);
+}
+
+.surprise-button:focus-visible,
+.search-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.surprise-button:disabled,
+.search-button:disabled {
+  cursor: pointer;
+ 
 }
 
 .search-input::placeholder {
@@ -124,31 +202,6 @@ function handleSubmit() {
 }
 
 .search-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 32px;
-  
-  background: var(--bg-base);
-  color: color-mix(in srgb, var(--text-muted) 42%, white);
-  border: none;
-  border-radius: 0 50px 50px 0;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.search-button:disabled {
-  cursor: default;
-}
-
-.search-button:not(:disabled) {
-  
-  color: color-mix(in srgb, var(--accent) 42%, white);
-
-  
-}
-
-.search-button:not(:disabled):hover {
-  color: color-mix(in srgb, var(--accent) 82%, white);
+  padding: 14px 16px 14px 10px;
 }
 </style>

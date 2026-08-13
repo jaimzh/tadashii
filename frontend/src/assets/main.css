@@ -3,25 +3,27 @@
 :root {
   --bg-dark: hsl(0, 0%, 0%);
   --bg-base: hsl(0, 0%, 0%);
-  --bg-light: hsl(0, 0%, 10%);
+  --bg-light: hsl(0, 0%, 3%);
+  --bg-main: color-mix(in srgb, var(--bg-base) 86%, transparent);
 
-  --text-main: hsl(0, 0%, 95%);
+  --text-main: hsl(0, 0%, 90%);
   --text-muted: hsl(0, 0%, 70%);
 
   --accent: rgb(0, 123, 255);
+  --accent-glow: rgb(203, 217, 233);
   --accent-rgb: 0, 123, 255;
 
   --border-color: hsl(0, 0%, 20%);
   --ambient-glow: 0 0 40px -10px rgba(var(--accent-rgb), 0.35);
 
-  --font-size-xs:   0.75rem;
-  --font-size-sm:   0.875rem;
-  --font-size-base: 1rem;
-  --font-size-md:   1.125rem;
-  --font-size-lg:   1.25rem;
-  --font-size-xl:   1.5rem;
-  --font-size-2xl:  2rem;
-  --font-size-3xl:  2.5rem;
+  --font-size-xs:   0.6875rem;
+  --font-size-sm:   0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md:   1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-2xl:  1.625rem;
+  --font-size-3xl:  2rem;
 }
 
 [data-theme="light"] {
@@ -29,15 +31,37 @@
   --bg-dark: hsl(0, 0%, 90%);
   --bg-base: hsl(0, 0%, 98%);
   --bg-light: hsl(0, 0%, 100%);
+  --bg-main: color-mix(in srgb, var(--bg-base) 86%, transparent);
 
   --text-main: hsl(0, 0%, 10%);
-  --text-muted: hsl(234, 100%, 14%);
+  --text-muted: hsl(235, 9%, 25%);
 
   --accent: rgb(0, 123, 255);
+  --accent-glow: rgb(44, 55, 72);
   --accent-rgb: 0, 123, 255;
 
   --border-color: hsl(0, 0%, 85%);
   --ambient-glow: 0 0 40px -10px rgba(var(--accent-rgb), 0.35);
+}
+
+[data-theme="zen"] {
+  --bg-dark: hsl(40, 38%, 76%);
+  --bg-base: hsl(41, 52%, 87%);
+  --bg-light: hsl(42, 55%, 93%);
+  --bg-main: color-mix(in srgb, var(--bg-base) 88%, transparent);
+
+  --text-main:  hsl(26, 14%, 10%);
+
+     
+
+  --text-muted: hsl(27, 13%, 40%);
+
+  --accent: rgb(147, 91, 55);
+  --accent-glow: rgb(147, 91, 55);
+  --accent-rgb: 147, 91, 55;
+
+  --border-color: hsl(33, 24%, 76%);
+  --ambient-glow: 0 0 40px -10px rgba(var(--accent-rgb), 0.2);
 }
 
 
@@ -51,14 +75,11 @@ body {
   background-color: var(--bg-base);
   color: var(--text-main);
   font-family: 'Inter', sans-serif;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
 }
 
-[data-theme="light"] .hero-image {
-  filter: invert(1);
-}
-
-[data-theme="light"] .hero-glow {
+[data-theme="light"] .hero-glow,
+[data-theme="zen"] .hero-glow {
   display: none;
 }
-
-

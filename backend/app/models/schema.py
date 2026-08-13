@@ -4,6 +4,11 @@ class RecommendRequest(BaseModel):
     prompt: str
 
 
+class TrailerResponse(BaseModel):
+    mal_id: int
+    trailer_url: str | None = None
+
+
 #alright so we need 2 models, our tadashii shape(animecandidate) and our final result
 #clean factual data from jikan and ai
 
