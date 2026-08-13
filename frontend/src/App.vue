@@ -13,6 +13,9 @@ const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
 const searchError = ref('')
+const MIN_LOADING_TIME = 25000
+
+
 const { theme } = useTheme()
 
 const auroraColors = computed(() => {
@@ -65,7 +68,11 @@ async function handleSearch(query, rect) {
 
 
    try {
-  const data = await recommend(query)
+  // const data = await recommend(query)
+  const [data] = await Promise.all([
+  recommend(query),
+  new Promise((resolve) => setTimeout(resolve, MIN_LOADING_TIME)),
+])
   const convertedResults = []
 
   for (const recommendation of data.results) {

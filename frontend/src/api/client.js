@@ -3,7 +3,7 @@ import { mockRecommendationResponse } from '@/data/mockRecommendations.js'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 // false = use the real FastAPI backend; true = use local UI test data.
-const USE_MOCK_DATA = false
+const USE_MOCK_DATA = true
 
 async function request(path, options) {
   const response = await fetch(`${API_BASE_URL}${path}`, options)

@@ -10,6 +10,17 @@ class TrailerResponse(BaseModel):
     title_japanese: str | None = None
 
 
+class AnimeQuote(BaseModel):
+    content: str
+    character: str
+    anime: str
+
+
+class QuoteListResponse(BaseModel):
+    anime: str
+    quotes: list[AnimeQuote]
+
+
 #alright so we need 2 models, our tadashii shape(animecandidate) and our final result
 #clean factual data from jikan and ai
 

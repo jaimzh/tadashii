@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.recommend import router as recommend_router            
+from app.api.quotes import router as quotes_router
 
 app = FastAPI(
     title="Tadashii API",
@@ -25,6 +26,7 @@ async def root():
     }
 
 app.include_router(recommend_router, prefix="/api")
+app.include_router(quotes_router, prefix="/api")
 
 
 @app.get("/health")

@@ -9,3 +9,5 @@ JIKAN_BASE_URL = os.getenv(
     "JIKAN_BASE_URL", "https://jikan-edge.lucas-hdo.workers.dev/v1"
 )
 JIKAN_SEARCH_LIMIT = int(os.getenv("JIKAN_SEARCH_LIMIT", "10"))
+ANIMECHAN_BASE_URL = os.getenv("ANIMECHAN_BASE_URL", "https://api.animechan.io/v1")
+ANIMECHAN_TIMEOUT_SECONDS = int(os.getenv("ANIMECHAN_TIMEOUT_SECONDS", "8"))
