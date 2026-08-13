@@ -7,6 +7,7 @@ class RecommendRequest(BaseModel):
 class TrailerResponse(BaseModel):
     mal_id: int
     trailer_url: str | None = None
+    title_japanese: str | None = None
 
 
 #alright so we need 2 models, our tadashii shape(animecandidate) and our final result

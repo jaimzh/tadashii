@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { PhDiceFive, PhMagnifyingGlass } from '@phosphor-icons/vue'
 import { surpriseQueries } from '@/data/surpriseQueries'
+import TextHint from './TextHint.vue'
 
 const props = defineProps({
   value: {
@@ -21,7 +22,7 @@ watch(
   () => props.value,
   (v) => {
     query.value = v
-  }
+  },
 )
 
 function handleSubmit() {
@@ -42,6 +43,7 @@ function surpriseMe() {
 
 <template>
   <form class="search-container" @submit.prevent="handleSubmit">
+    <span class="search-border" aria-hidden="true"></span>
     <input
       v-model="query"
       type="text"
@@ -51,16 +53,18 @@ function surpriseMe() {
       :placeholder="readonly ? '' : 'What do you feel like watching?'"
     />
     <div class="search-actions">
-      <button
-        type="button"
-        class="surprise-button"
-        :disabled="readonly"
-        aria-label="Surprise me"
-        title="Surprise me"
-        @click="surpriseMe"
-      >
-        <PhDiceFive :size="22" weight="bold" />
-      </button>
+      <TextHint text="Surprise me" position="bottom">
+        <button
+          type="button"
+          class="surprise-button"
+          :disabled="readonly"
+          aria-label="Surprise me"
+          @click="surpriseMe"
+        >
+          <PhDiceFive :size="22" weight="bold" />
+        </button>
+      </TextHint>
+<TextHint text="Search" position="bottom">
       <button
         type="submit"
         class="search-button"
@@ -69,14 +73,19 @@ function surpriseMe() {
       >
         <PhMagnifyingGlass :size="22" weight="bold" />
       </button>
+</TextHint>
     </div>
   </form>
 </template>
 
 <style scoped>
 @keyframes trail {
-  0% { offset-distance: 0%; }
-  100% { offset-distance: 100%; }
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
 }
 
 .search-container {
@@ -87,24 +96,35 @@ function surpriseMe() {
   margin: 0 auto;
   border-radius: 50px;
   padding: 1px;
-  overflow: hidden;
   background: color-mix(in srgb, var(--border-color) 70%, transparent);
   transition: background 0.3s ease;
-   box-shadow: 0 8px 6px -6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 6px -6px rgba(0, 0, 0, 0.4);
 }
 
 .search-container:focus-within {
   background: color-mix(in srgb, var(--accent) 50%, transparent);
-
 }
 
-.search-container::before,
-.search-container::after {
-  content: "";
+.search-border {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.search-border::before,
+.search-border::after {
+  content: '';
   position: absolute;
   width: 150px;
   aspect-ratio: 1;
-  background: radial-gradient(circle, white 10%, color-mix(in srgb, var(--accent) 40%, white) 40%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    white 10%,
+    color-mix(in srgb, var(--accent) 40%, white) 40%,
+    transparent 70%
+  );
   offset-path: border-box;
   offset-anchor: 50% 50%;
   filter: blur(6px);
@@ -112,11 +132,11 @@ function surpriseMe() {
   animation: trail 5s linear infinite;
 }
 
-.search-container::before {
+.search-border::before {
   z-index: 2;
 }
 
-.search-container::after {
+.search-border::after {
   z-index: 1;
   animation-delay: -2.5s;
   opacity: 0.5;
@@ -144,7 +164,6 @@ function surpriseMe() {
   display: flex;
   flex: 0 0 auto;
   align-items: stretch;
-  overflow: hidden;
   border-radius: 0 50px 50px 0;
   background: var(--input-bg, var(--bg-base));
 }
@@ -159,7 +178,6 @@ function surpriseMe() {
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.2s ease;
-  
 }
 
 .surprise-button {
@@ -193,7 +211,6 @@ function surpriseMe() {
 .surprise-button:disabled,
 .search-button:disabled {
   cursor: pointer;
- 
 }
 
 .search-input::placeholder {

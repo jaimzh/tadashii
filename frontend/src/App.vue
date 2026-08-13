@@ -12,6 +12,7 @@ const searchQuery = ref('')
 const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
+const searchError = ref('')
 const { theme } = useTheme()
 
 const auroraColors = computed(() => {
@@ -53,12 +54,14 @@ function goHome() {
   stage.value = 'home'
   searchQuery.value = ''
   searchOrigin.value = null
+  searchError.value = ''
 }
 
 async function handleSearch(query, rect) {
   searchQuery.value = query
   searchOrigin.value = rect
   stage.value = 'loading'
+  searchError.value = ''
 
 
    try {
@@ -77,6 +80,7 @@ async function handleSearch(query, rect) {
   console.log('RESULTS:', results.value)
 } catch (err) {
   console.error('Search failed:', err)
+  searchError.value = err instanceof Error ? err.message : 'Search failed. Please try again.'
   stage.value = 'home'
 }
 
@@ -112,6 +116,7 @@ onUnmounted(() => {
     <HomeView
       v-if="stage === 'home' || stage === 'loading'"
       :is-searching="stage === 'loading'"
+      :error="searchError"
       @search="handleSearch"
     />
     <ResultView v-else-if="stage === 'results'" :results="results" />

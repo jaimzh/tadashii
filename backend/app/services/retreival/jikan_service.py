@@ -35,13 +35,25 @@ def adapt_anime_result(anime: dict) -> dict:
     )
 
     trailer = anime.get("trailer") or {}
+    titles = anime.get("titles") or []
+
+    def title_by_type(title_type: str) -> str | None:
+        for item in titles:
+            if isinstance(item, dict) and item.get("type") == title_type:
+                return item.get("title")
+
+        return None
 
     return {
         "mal_id": anime.get("malId"),
         "url": anime.get("url"),
         "title": anime.get("title"),
-        "title_english": anime.get("titleEnglish"),
-        "title_japanese": anime.get("titleJapanese"),
+        "title_english": anime.get("titleEnglish") or title_by_type("English"),
+        "title_japanese": (
+            anime.get("titleJapanese")
+            or anime.get("title_japanese")
+            or title_by_type("Japanese")
+        ),
         "title_synonyms": anime.get("titleSynonyms") or [],
         "type": anime.get("type"),
         "source": anime.get("source"),
@@ -65,7 +77,7 @@ def adapt_anime_result(anime: dict) -> dict:
     }
 
 
-def get_anime_trailer(mal_id: int) -> str | None:
+def get_anime_details(mal_id: int) -> dict:
     last_error = None
 
     for attempt in range(JIKAN_RETRY_COUNT + 1):
@@ -86,13 +98,18 @@ def get_anime_trailer(mal_id: int) -> str | None:
             if not isinstance(anime, dict):
                 raise RuntimeError("Anime API returned an invalid detail response")
 
-            trailer = anime.get("trailer") or {}
-            return trailer.get("url")
+            return adapt_anime_result(anime)
         except requests.RequestException as exc:
             last_error = str(exc)
             time.sleep(1 + attempt)
 
     raise RuntimeError(last_error or f"Jikan detail lookup failed for anime {mal_id}")
+
+
+def get_anime_trailer(mal_id: int) -> str | None:
+    anime = get_anime_details(mal_id)
+    trailer = anime.get("trailer") or {}
+    return trailer.get("url")
 
 
 def normalize_search_terms(terms: list) -> list[str]:

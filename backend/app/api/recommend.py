@@ -8,7 +8,7 @@ from app.services.ranking.ranking_service import rank_anime
 from app.services.response.response_builder_service import build_recommendation_results
 from app.services.retreival.ai_suggest import suggest_anime
 from app.services.retreival.jikan_service import (
-    get_anime_trailer,
+    get_anime_details,
     search_anime_by_intent,
     search_anime_by_titles,
 )
@@ -20,11 +20,16 @@ router = APIRouter()
 @router.get("/anime/{mal_id}/trailer", response_model=TrailerResponse)
 def anime_trailer(mal_id: int):
     try:
-        trailer_url = get_anime_trailer(mal_id)
+        anime = get_anime_details(mal_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    return TrailerResponse(mal_id=mal_id, trailer_url=trailer_url)
+    trailer = anime.get("trailer") or {}
+    return TrailerResponse(
+        mal_id=mal_id,
+        trailer_url=trailer.get("url"),
+        title_japanese=anime.get("title_japanese"),
+    )
 
 
 @router.post("/recommend")

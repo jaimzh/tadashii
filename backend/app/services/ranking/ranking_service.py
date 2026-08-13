@@ -54,7 +54,10 @@ Rules:
 - Score based on STORY + THEMES + CHARACTER ARC + SYNOPSIS
 - NOT popularity or rating
 - Be strict and reasoning-based
-- Keep reason under 20 words
+- Write a specific 1-2 sentence reason explaining how the anime's story,
+  themes, or character journey connects to the user's exact request
+- Mention concrete details from the provided synopsis instead of generic praise
+- Keep each reason under 45 words and do not reveal spoilers
 - Return sorted highest match first
 - Return only anime from the provided ANIME LIST
 """

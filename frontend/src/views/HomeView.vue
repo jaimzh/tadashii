@@ -9,6 +9,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  error: {
+    type: String,
+    default: '',
+  },
 })
 const emit = defineEmits(['search'])
 
@@ -26,6 +30,7 @@ function handleSearch(query) {
       <Loader v-if="isSearching" />
       <AnimatedHero v-else />
       <SearchBar v-if="!isSearching" ref="searchBarEl" @submit="handleSearch" />
+      <p v-if="!isSearching && error" class="search-error" role="alert">{{ error }}</p>
       <div class="hero-glow"></div>
     </div>
   </div>
@@ -62,6 +67,14 @@ function handleSearch(query) {
   align-items: center;
   justify-content: center;
 
+}
+
+.search-error {
+  z-index: 2;
+  max-width: 520px;
+  margin: 1rem auto 0;
+  color: #dc2626;
+  text-align: center;
 }
 
 

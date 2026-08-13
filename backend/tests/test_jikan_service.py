@@ -12,6 +12,10 @@ class JikanEdgeAdapterTests(unittest.TestCase):
                 "url": "https://myanimelist.net/anime/20/Naruto",
                 "title": "Naruto",
                 "titleEnglish": "Naruto",
+                "titles": [
+                    {"type": "Default", "title": "Naruto"},
+                    {"type": "Japanese", "title": "ナルト"},
+                ],
                 "imageUrl": "https://cdn.example/naruto.jpg",
                 "synopsis": "A young ninja seeks recognition.",
                 "type": "TV",
@@ -23,6 +27,7 @@ class JikanEdgeAdapterTests(unittest.TestCase):
 
         self.assertEqual(result["mal_id"], 20)
         self.assertEqual(result["title_english"], "Naruto")
+        self.assertEqual(result["title_japanese"], "ナルト")
         self.assertEqual(result["images"]["jpg"]["large_image_url"], "https://cdn.example/naruto.jpg")
         self.assertEqual(result["genres"], [{"name": "Action"}, {"name": "Adventure"}])
         self.assertEqual(result["data_source"], "jikan-edge")
@@ -62,6 +67,7 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         response.json.return_value = {
             "data": {
                 "malId": 1735,
+                "titleJapanese": "ナルト- 疾風伝",
                 "trailer": {
                     "url": "https://www.youtube.com/watch?v=1dy2zPPrKD0",
                 },

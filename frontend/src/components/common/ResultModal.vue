@@ -85,6 +85,17 @@ const genres = computed(() =>
 
           <div class="modal-actions">
             <a
+              v-if="result.url"
+              class="watch-btn secondary-btn"
+              :href="result.url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <PhArrowSquareOut :size="16" weight="bold" />
+              View anime
+            </a>
+
+            <a
               v-if="result.trailerUrl"
               class="watch-btn trailer-btn"
               :href="result.trailerUrl"
@@ -99,16 +110,6 @@ const genres = computed(() =>
               Finding trailer…
             </span>
 
-            <a
-              v-if="result.url"
-              class="watch-btn secondary-btn"
-              :href="result.url"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <PhArrowSquareOut :size="16" weight="bold" />
-              View anime
-            </a>
           </div>
         </div>
       </div>
