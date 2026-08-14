@@ -2,9 +2,19 @@
 import { ref } from 'vue'
 
 const themes = ['dark', 'light', 'zen']
+const faviconByTheme = {
+  dark: '/favicons/favicon_io%20dark/favicon.ico',
+  light: '/favicons/favicon_io%20light/favicon.ico',
+  zen: '/favicons/favicon_io%20zen/favicon.ico',
+}
 const theme = ref('dark')
 let themeTransitionTimer
 let activeViewTransition = null
+
+function updateFavicon(newTheme) {
+  const favicon = document.querySelector('#app-favicon')
+  if (favicon) favicon.setAttribute('href', faviconByTheme[newTheme])
+}
 
 function playThemeTransition() {
   const root = document.documentElement
@@ -24,6 +34,7 @@ export function useTheme() {
     theme.value = newTheme
     document.documentElement.setAttribute('data-theme', newTheme)
     localStorage.setItem('user-theme', newTheme)
+    updateFavicon(newTheme)
   }
 
   const toggleTheme = async (event) => {
