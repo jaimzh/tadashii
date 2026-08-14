@@ -112,6 +112,25 @@ def get_anime_trailer(mal_id: int) -> str | None:
     return trailer.get("url")
 
 
+def add_missing_japanese_titles(recommendations: list) -> list:
+    """Complete missing Japanese titles before recommendations reach the frontend."""
+    for recommendation in recommendations:
+        anime = getattr(recommendation, "anime", None)
+
+        if not anime or anime.title_japanese:
+            continue
+
+        try:
+            details = get_anime_details(anime.mal_id)
+        except RuntimeError:
+            # Missing optional metadata should not fail the recommendation request.
+            continue
+
+        anime.title_japanese = details.get("title_japanese")
+
+    return recommendations
+
+
 def normalize_search_terms(terms: list) -> list[str]:
     normalized = []
     seen = set()

@@ -8,7 +8,8 @@ from app.services.ranking.ranking_service import rank_anime
 from app.services.response.response_builder_service import build_recommendation_results
 from app.services.retreival.ai_suggest import suggest_anime
 from app.services.retreival.jikan_service import (
-    get_anime_details,
+    add_missing_japanese_titles,
+    get_anime_trailer,
     search_anime_by_intent,
     search_anime_by_titles,
 )
@@ -20,15 +21,13 @@ router = APIRouter()
 @router.get("/anime/{mal_id}/trailer", response_model=TrailerResponse)
 def anime_trailer(mal_id: int):
     try:
-        anime = get_anime_details(mal_id)
+        trailer_url = get_anime_trailer(mal_id)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    trailer = anime.get("trailer") or {}
     return TrailerResponse(
         mal_id=mal_id,
-        trailer_url=trailer.get("url"),
-        title_japanese=anime.get("title_japanese"),
+        trailer_url=trailer_url,
     )
 
 
@@ -51,6 +50,7 @@ def recommend(data: RecommendRequest):
 
     rankings = rank_anime(data.prompt, intent, filtered_results)
     results = build_recommendation_results(rankings, filtered_results)
+    results = add_missing_japanese_titles(results)
 
     return {
         "input": data.prompt,

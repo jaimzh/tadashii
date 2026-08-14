@@ -25,7 +25,6 @@ async function selectResult(result) {
 
     if (selected.value?.id === result.id) {
       selected.value.trailerUrl = trailer.trailer_url
-      selected.value.japaneseName = trailer.title_japanese || selected.value.japaneseName
     }
   } catch (error) {
     console.error('Trailer lookup failed:', error)

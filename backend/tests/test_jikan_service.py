@@ -87,6 +87,28 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         with patch.object(jikan_service.requests, "get", return_value=response):
             self.assertIsNone(jikan_service.get_anime_trailer(20))
 
+    def test_adds_missing_japanese_title_to_final_recommendation(self):
+        anime = Mock(mal_id=20, title_japanese=None)
+        recommendation = Mock(anime=anime)
+
+        with patch.object(
+            jikan_service,
+            "get_anime_details",
+            return_value={"title_japanese": "ナルト"},
+        ):
+            results = jikan_service.add_missing_japanese_titles([recommendation])
+
+        self.assertEqual(results[0].anime.title_japanese, "ナルト")
+
+    def test_keeps_existing_japanese_title_without_detail_request(self):
+        anime = Mock(mal_id=20, title_japanese="ナルト")
+        recommendation = Mock(anime=anime)
+
+        with patch.object(jikan_service, "get_anime_details") as get_details:
+            jikan_service.add_missing_japanese_titles([recommendation])
+
+        get_details.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

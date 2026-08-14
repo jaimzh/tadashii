@@ -13,7 +13,7 @@ const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
 const searchError = ref('')
-const MIN_LOADING_TIME = 25000
+const MIN_LOADING_TIME = 0
 
 
 const { theme } = useTheme()

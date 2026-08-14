@@ -1,8 +1,33 @@
+
+
+
+
+
+
+<script setup>
+import LoadingQuote from './LoadingQuote.vue'
+import PikachuLoader from './PikachuLoader.vue';
+</script>
+
 <template>
-  <span class="loader" role="status" aria-label="Generating recommendations"></span>
+  <div class="loading-content">
+    <!-- <PikachuLoader/> -->
+    <span class="loader" role="status" aria-label="Generating recommendations"></span>
+    <LoadingQuote />
+  </div>
 </template>
 
 <style scoped>
+.loading-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
 .loader {
   --color-1: var(--text-main);
   --color-2: color-mix(in srgb, var(--text-main) 20%, transparent);
@@ -20,9 +45,13 @@
   position: relative;
   z-index: 2;
   color: var(--color-1);
-  transform: translateY(calc(30 * var(--size)));
+  transform: translate(
+    calc(-30 * var(--size)),
+    calc(30 * var(--size))
+  );
   box-sizing: border-box;
   animation: animloader 2s ease infinite;
+
 }
 
 .loader::after,

@@ -7,7 +7,6 @@ class RecommendRequest(BaseModel):
 class TrailerResponse(BaseModel):
     mal_id: int
     trailer_url: str | None = None
-    title_japanese: str | None = None
 
 
 class AnimeQuote(BaseModel):
