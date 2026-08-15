@@ -95,6 +95,10 @@ Parsed intent terms -> Jikan keyword search
 
 The results are merged and deduplicated by `mal_id`.
 
+Title retrieval and intent retrieval run concurrently. Each branch may use up
+to `JIKAN_MAX_CONCURRENCY` searches, so the default peak across both branches
+is six active Jikan requests.
+
 ### 3. Normalization
 
 File: `app/services/normalization/normalize_service.py`

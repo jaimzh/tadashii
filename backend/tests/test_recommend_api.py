@@ -81,6 +81,56 @@ class RecommendApiTests(unittest.TestCase):
         intent_search.assert_not_called()
         rank.assert_not_called()
 
+    def test_title_and_intent_retrieval_run_concurrently(self):
+        both_started = Barrier(2)
+
+        def title_search(_titles, request_id=None):
+            both_started.wait(timeout=1)
+            return []
+
+        def intent_search(_intent, request_id=None):
+            both_started.wait(timeout=1)
+            return []
+
+        with (
+            patch("app.api.recommend.analyze_prompt", return_value=VALID_INTENT),
+            patch(
+                "app.api.recommend.suggest_anime",
+                return_value={"suggested_anime": ["Monster"]},
+            ),
+            patch(
+                "app.api.recommend.search_anime_by_titles",
+                side_effect=title_search,
+            ),
+            patch(
+                "app.api.recommend.search_anime_by_intent",
+                side_effect=intent_search,
+            ),
+        ):
+            with self.assertRaises(HTTPException) as raised:
+                recommend(RecommendRequest(prompt="dark thriller anime"))
+
+        self.assertEqual(raised.exception.status_code, 404)
+
+    def test_retrieval_failure_returns_service_unavailable(self):
+        with (
+            patch("app.api.recommend.analyze_prompt", return_value=VALID_INTENT),
+            patch(
+                "app.api.recommend.suggest_anime",
+                return_value={"suggested_anime": ["Monster"]},
+            ),
+            patch(
+                "app.api.recommend.search_anime_by_titles",
+                side_effect=RuntimeError("Jikan unavailable"),
+            ),
+            patch("app.api.recommend.search_anime_by_intent", return_value=[]),
+        ):
+            with self.assertRaises(HTTPException) as raised:
+                recommend(RecommendRequest(prompt="dark thriller anime"))
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(raised.exception.detail, "Jikan unavailable")
+
     def test_zero_jikan_results_stop_before_ranking(self):
         with (
             patch("app.api.recommend.analyze_prompt", return_value=VALID_INTENT),

@@ -34,6 +34,29 @@ def _suggest_anime(request_id: str, prompt: str) -> dict:
         return suggestions
 
 
+def _retrieve_by_titles(
+    request_id: str,
+    suggested_titles: list[str],
+) -> list[dict]:
+    with timed_stage(request_id, "title_retrieval") as stage:
+        results = search_anime_by_titles(
+            suggested_titles,
+            request_id=request_id,
+        )
+        stage["count"] = len(results)
+        return results
+
+
+def _retrieve_by_intent(request_id: str, intent: dict) -> list[dict]:
+    with timed_stage(request_id, "intent_retrieval") as stage:
+        results = search_anime_by_intent(
+            intent,
+            request_id=request_id,
+        )
+        stage["count"] = len(results)
+        return results
+
+
 @router.get("/anime/{mal_id}/trailer", response_model=TrailerResponse)
 def anime_trailer(mal_id: int):
     try:
@@ -96,19 +119,19 @@ def recommend(data: RecommendRequest):
         suggested_titles = ai_suggestions.get("suggested_anime", [])
 
         try:
-            with timed_stage(request_id, "title_retrieval") as stage:
-                title_results = search_anime_by_titles(
+            with ThreadPoolExecutor(max_workers=2) as retrieval_executor:
+                title_future = retrieval_executor.submit(
+                    _retrieve_by_titles,
+                    request_id,
                     suggested_titles,
-                    request_id=request_id,
                 )
-                stage["count"] = len(title_results)
-
-            with timed_stage(request_id, "intent_retrieval") as stage:
-                intent_results = search_anime_by_intent(
+                intent_results_future = retrieval_executor.submit(
+                    _retrieve_by_intent,
+                    request_id,
                     intent,
-                    request_id=request_id,
                 )
-                stage["count"] = len(intent_results)
+                title_results = title_future.result()
+                intent_results = intent_results_future.result()
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
