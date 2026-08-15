@@ -1,17 +1,36 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
-import HomeView from './views/HomeView.vue'
-import ResultView from './views/ResultView.vue'
 import { recommend } from './api/client.js'
 
-const stage = ref('home')
+const route = useRoute()
+const router = useRouter()
+const isLoading = ref(false)
 const searchQuery = ref('')
 const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
 const searchError = ref('')
 const MIN_LOADING_TIME = 0
+const showHeaderSearch = computed(
+  () => isLoading.value || route.name !== 'home',
+)
+
+function viewProps(routeName) {
+  if (routeName === 'home') {
+    return {
+      isSearching: isLoading.value,
+      error: searchError.value,
+    }
+  }
+
+  if (routeName === 'results') {
+    return { results: results.value }
+  }
+
+  return {}
+}
 
 function toCardResult(recommendation) {
   const anime = recommendation.anime
@@ -37,17 +56,19 @@ function toCardResult(recommendation) {
 
 function goHome() {
   clearTimeout(loadTimer)
-  stage.value = 'home'
+  isLoading.value = false
   searchQuery.value = ''
   searchOrigin.value = null
   searchError.value = ''
+  router.push({ name: 'home' })
 }
 
 async function handleSearch(query, rect) {
   searchQuery.value = query
   searchOrigin.value = rect
-  stage.value = 'loading'
+  isLoading.value = true
   searchError.value = ''
+  await router.push({ name: 'home' })
 
 
    try {
@@ -64,14 +85,16 @@ async function handleSearch(query, rect) {
   }
 
   results.value = convertedResults
-  stage.value = 'results'
+  isLoading.value = false
+  await router.push({ name: 'results' })
 
   console.log('API RESPONSE:', data)
   console.log('RESULTS:', results.value)
 } catch (err) {
   console.error('Search failed:', err)
   searchError.value = err instanceof Error ? err.message : 'Search failed. Please try again.'
-  stage.value = 'home'
+  isLoading.value = false
+  await router.push({ name: 'home' })
 }
 
   // clearTimeout(loadTimer)
@@ -79,6 +102,16 @@ async function handleSearch(query, rect) {
   //   stage.value = 'results'
   // }, 10000)
 }
+
+watch(
+  () => route.name,
+  (routeName) => {
+    if (routeName === 'results' && !results.value.length) {
+      router.replace({ name: 'home' })
+    }
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
   clearTimeout(loadTimer)
@@ -89,20 +122,20 @@ onUnmounted(() => {
   <div class="main">
     <div class="wrapper">
     <AppHeader
-      :is-searching="stage !== 'home'"
-      :is-loading="stage === 'loading'"
+      :is-searching="showHeaderSearch"
+      :is-loading="isLoading"
       :query="searchQuery"
       :search-origin="searchOrigin"
       @search="handleSearch"
       @home="goHome"
     />
-    <HomeView
-      v-if="stage === 'home' || stage === 'loading'"
-      :is-searching="stage === 'loading'"
-      :error="searchError"
-      @search="handleSearch"
-    />
-    <ResultView v-else-if="stage === 'results'" :results="results" />
+    <RouterView v-slot="{ Component, route: activeRoute }">
+      <component
+        :is="Component"
+        v-bind="viewProps(activeRoute.name)"
+        @search="handleSearch"
+      />
+    </RouterView>
   </div>
   </div>
   

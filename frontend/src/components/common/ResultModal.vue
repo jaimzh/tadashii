@@ -1,6 +1,14 @@
 <script setup>
 import { computed } from 'vue'
-import { PhArrowSquareOut, PhList, PhPlay, PhStar, PhX } from '@phosphor-icons/vue'
+import {
+  PhArrowSquareOut,
+  PhBookmarkSimple,
+  PhList,
+  PhPlay,
+  PhStar,
+  PhX,
+} from '@phosphor-icons/vue'
+import { useWatchLater } from '@/composables/useWatchLater.js'
 
 const props = defineProps({
   result: {
@@ -10,6 +18,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+const { isSaved, toggleSaved } = useWatchLater()
+const savedForLater = computed(() => isSaved(props.result.id))
 
 const genres = computed(() =>
   (props.result.genres || '')
@@ -106,6 +116,17 @@ const airedLabel = computed(() => {
           </div>
 
           <div class="modal-actions">
+            <button
+              type="button"
+              class="watch-btn watch-later-btn"
+              :class="{ 'is-saved': savedForLater }"
+              :aria-pressed="savedForLater"
+              @click="toggleSaved(result)"
+            >
+              <PhBookmarkSimple :size="16" :weight="savedForLater ? 'fill' : 'bold'" />
+              {{ savedForLater ? 'Saved' : 'Watch later' }}
+            </button>
+
             <a
               v-if="result.url"
               class="watch-btn secondary-btn"
@@ -170,7 +191,7 @@ const airedLabel = computed(() => {
   background: var(--modal-surface);
   color: var(--modal-text);
   box-shadow:
-    0 32px 90px rgba(0, 0, 0, 0.7),
+    0 22px 58px rgba(0, 0, 0, 0.38),
     0 0 0 1px color-mix(in srgb, var(--text-main) 3%, transparent) inset;
   animation: modal-in 220ms ease-out;
 }
@@ -389,6 +410,25 @@ const airedLabel = computed(() => {
   font-weight: 650;
   text-decoration: none;
   transition: transform 160ms ease, background 160ms ease;
+}
+
+.watch-later-btn {
+  border: 1px solid var(--modal-border);
+  background: var(--modal-elevated);
+  color: var(--modal-text);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.watch-later-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--modal-border));
+  background: color-mix(in srgb, var(--accent) 9%, var(--modal-elevated));
+}
+
+.watch-later-btn.is-saved {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--modal-border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--modal-elevated));
+  color: var(--accent);
 }
 
 .trailer-btn {

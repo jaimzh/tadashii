@@ -2,7 +2,8 @@
 import { onMounted, ref, watch, nextTick } from 'vue';
 import gsap from 'gsap';
 import { useTheme } from '@/coposables/useTheme';
-import { PhLeaf, PhSun, PhMoon, PhQuestion, PhList, PhX } from '@phosphor-icons/vue';
+import { PhBookmarkSimple, PhLeaf, PhSun, PhMoon, PhQuestion, PhList, PhX } from '@phosphor-icons/vue';
+import { useWatchLater } from '@/composables/useWatchLater.js';
 import SearchBar from './SearchBar.vue';
 import TadashiiLogo from './TadashiiLogo.vue';
 import TextHint from './TextHint.vue';
@@ -15,6 +16,7 @@ const props = defineProps({
 });
 
 const { theme, toggleTheme, initTheme } = useTheme();
+const { savedCount } = useWatchLater();
 const navSearchEl = ref(null);
 const dimmed = ref(false);
 const menuOpen = ref(false);
@@ -109,6 +111,16 @@ watch(
 
     <!-- <SearchBar/> -->
     <div class="actions">
+      <TextHint text="Watch Later" position="bottom">
+        <RouterLink
+          to="/watch-later"
+          class="icon-btn watch-later-link"
+          :aria-label="`Watch Later, ${savedCount} saved`"
+        >
+          <PhBookmarkSimple :size="20" :weight="savedCount ? 'fill' : 'regular'" />
+          <span v-if="savedCount" class="saved-badge">{{ savedCount > 99 ? '99+' : savedCount }}</span>
+        </RouterLink>
+      </TextHint>
       <TextHint :text="`Change theme (currently ${theme})`" position="bottom">
         <button
           @click="toggleTheme"
@@ -141,6 +153,11 @@ watch(
       </button>
 
       <div v-if="menuOpen" id="mobile-header-menu" class="mobile-menu-panel">
+        <RouterLink to="/watch-later" class="menu-item" @click="menuOpen = false">
+          <PhBookmarkSimple :size="20" :weight="savedCount ? 'fill' : 'regular'" />
+          <span>Watch Later</span>
+          <span v-if="savedCount" class="menu-count">{{ savedCount }}</span>
+        </RouterLink>
         <button type="button" class="menu-item" @click="changeTheme">
           <PhSun v-if="theme === 'dark'" :size="20" />
           <PhLeaf v-else-if="theme === 'light'" :size="20" />
@@ -261,6 +278,40 @@ watch(
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.watch-later-link {
+  position: relative;
+  text-decoration: none;
+}
+
+.watch-later-link.router-link-active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-color));
+  color: var(--accent);
+}
+
+.saved-badge {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid var(--bg-base);
+  border-radius: 999px;
+  color: white;
+  background: var(--accent);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+}
+
+.menu-count {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
 }
 
 .icon-btn:hover {
