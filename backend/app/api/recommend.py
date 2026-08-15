@@ -168,7 +168,12 @@ def recommend(data: RecommendRequest):
 
         try:
             with timed_stage(request_id, "ranking") as stage:
-                rankings = rank_anime(data.prompt, intent, filtered_results)
+                rankings = rank_anime(
+                    data.prompt,
+                    intent,
+                    filtered_results,
+                    request_id=request_id,
+                )
                 stage["count"] = len(rankings)
         except Exception as exc:
             raise HTTPException(

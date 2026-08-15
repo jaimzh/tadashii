@@ -1,9 +1,17 @@
 # app/services/ranking_service.py
 
 from google import genai
+from google.genai.errors import ServerError
 import json
+from time import sleep
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_TIMEOUT_MS
+from app.config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    GEMINI_RANKING_RETRY_DELAY_SECONDS,
+    GEMINI_TIMEOUT_MS,
+)
+from app.observability.pipeline_timing import logger
 
 client = genai.Client(
     api_key=GEMINI_API_KEY,
@@ -13,6 +21,7 @@ client = genai.Client(
     },
 )
 TARGET_RECOMMENDATION_COUNT = 10
+RANKING_MAX_ATTEMPTS = 2
 
 
 def build_rank_payload(anime_list: list):
@@ -27,7 +36,36 @@ def build_rank_payload(anime_list: list):
     return payload
 
 
-def rank_anime(prompt: str, intent: dict, anime_list: list):
+def _generate_rankings(prompt_payload: str, request_id: str | None):
+    for attempt in range(1, RANKING_MAX_ATTEMPTS + 1):
+        try:
+            return client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt_payload,
+            )
+        except ServerError as exc:
+            should_retry = exc.code == 503 and attempt < RANKING_MAX_ATTEMPTS
+
+            if not should_retry:
+                raise
+
+            logger.warning(
+                "request=%s service=gemini stage=ranking status=retry "
+                "http_status=503 attempt=%d next_attempt=%d delay_s=%.1f",
+                request_id or "untracked",
+                attempt,
+                attempt + 1,
+                GEMINI_RANKING_RETRY_DELAY_SECONDS,
+            )
+            sleep(GEMINI_RANKING_RETRY_DELAY_SECONDS)
+
+
+def rank_anime(
+    prompt: str,
+    intent: dict,
+    anime_list: list,
+    request_id: str | None = None,
+):
     anime_payload = build_rank_payload(anime_list)
 
     if not anime_payload:
@@ -76,10 +114,7 @@ Rules:
 - Return only anime from the provided ANIME LIST
 """
 
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt_payload
-    )
+    response = _generate_rankings(prompt_payload, request_id)
 
     rankings = json.loads(response.text)
 

@@ -293,6 +293,7 @@ Required or supported environment variables:
 GEMINI_API_KEY=your_api_key_here
 GEMINI_MODEL=gemini-3.1-flash-lite
 GEMINI_TIMEOUT_MS=30000
+GEMINI_RANKING_RETRY_DELAY_SECONDS=0.5
 JIKAN_BASE_URL=https://jikan-edge.lucas-hdo.workers.dev/v1
 JIKAN_SEARCH_LIMIT=10
 JIKAN_MAX_CONCURRENCY=3
@@ -302,7 +303,10 @@ JIKAN_MAX_CONCURRENCY=3
 
 `JIKAN_MAX_CONCURRENCY` limits how many independent Jikan searches run at once within title retrieval and intent retrieval. Results retain their original query order even when requests finish out of order.
 
-`GEMINI_TIMEOUT_MS` bounds each Gemini request. Gemini retries are disabled so an upstream stall cannot hold the recommendation pipeline indefinitely.
+`GEMINI_TIMEOUT_MS` bounds each Gemini request. Broad SDK retries are disabled
+so an upstream stall cannot hold the recommendation pipeline indefinitely. The
+ranking stage makes one additional attempt only for a temporary Gemini HTTP
+503, after `GEMINI_RANKING_RETRY_DELAY_SECONDS`.
 
 ## Running The Server
 
