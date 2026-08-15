@@ -55,6 +55,10 @@ JIKAN_BASE_URL = os.getenv(
     "JIKAN_BASE_URL", "https://jikan-edge.lucas-hdo.workers.dev/v1"
 )
 JIKAN_SEARCH_LIMIT = _positive_int_env("JIKAN_SEARCH_LIMIT", 10)
+JIKAN_TITLE_SEARCH_SCAN_LIMIT = _positive_int_env(
+    "JIKAN_TITLE_SEARCH_SCAN_LIMIT", 50
+)
+JIKAN_TITLE_MATCH_LIMIT = _positive_int_env("JIKAN_TITLE_MATCH_LIMIT", 3)
 JIKAN_MAX_CONCURRENCY = _positive_int_env("JIKAN_MAX_CONCURRENCY", 3)
 JIKAN_TIMEOUT_SECONDS = _positive_int_env("JIKAN_TIMEOUT_SECONDS", 10)
 JIKAN_RETRY_COUNT = max(0, int(os.getenv("JIKAN_RETRY_COUNT", "2")))

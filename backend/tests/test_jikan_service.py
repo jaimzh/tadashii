@@ -137,6 +137,48 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         self.assertEqual(len(results), jikan_service.JIKAN_SEARCH_LIMIT)
         self.assertEqual(results[0]["mal_id"], 0)
 
+    def test_title_search_scans_past_default_limit_and_keeps_best_matches(self):
+        search_results = [
+            {"mal_id": anime_id, "title": f"Naruto Movie {anime_id}"}
+            for anime_id in range(12)
+        ]
+        search_results.extend(
+            [
+                {"mal_id": 20, "title": "Naruto"},
+                {"mal_id": 1735, "title": "Naruto: Shippuden"},
+            ]
+        )
+
+        with patch.object(
+            jikan_service,
+            "jikan_search_anime",
+            return_value=search_results,
+        ) as search:
+            results = jikan_service.search_anime_by_titles(["Naruto"])
+
+        self.assertEqual(results[0]["mal_id"], 20)
+        self.assertLessEqual(len(results), jikan_service.JIKAN_TITLE_MATCH_LIMIT)
+        search.assert_called_once_with(
+            "Naruto",
+            request_id=None,
+            result_limit=jikan_service.JIKAN_TITLE_SEARCH_SCAN_LIMIT,
+        )
+
+    def test_title_matching_prefers_exact_hajime_no_ippo_title(self):
+        results = jikan_service.select_best_title_matches(
+            "Hajime no Ippo",
+            [
+                {"mal_id": 6213, "title": "Hajime no Ippo: New Challenger"},
+                {"mal_id": 18689, "title": "Hajime no Ippo: Rising"},
+                {"mal_id": 263, "title": "Hajime no Ippo"},
+                {"mal_id": 34403, "title": "Hajimete no Gal"},
+            ],
+            limit=3,
+        )
+
+        self.assertEqual(results[0]["mal_id"], 263)
+        self.assertNotIn(34403, [anime["mal_id"] for anime in results])
+
     def test_rejects_malformed_search_payload(self):
         response = Mock(status_code=200)
         response.json.return_value = {"data": {"malId": 20}}

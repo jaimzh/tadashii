@@ -3,6 +3,8 @@ from functools import partial
 import re
 import time
 from time import perf_counter
+import unicodedata
+from difflib import SequenceMatcher
 
 import requests
 
@@ -12,6 +14,8 @@ from app.config import (
     JIKAN_MAX_CONCURRENCY,
     JIKAN_RETRY_COUNT,
     JIKAN_SEARCH_LIMIT,
+    JIKAN_TITLE_MATCH_LIMIT,
+    JIKAN_TITLE_SEARCH_SCAN_LIMIT,
     JIKAN_TIMEOUT_SECONDS,
     SEARCH_QUERY_MAX_LENGTH,
 )
@@ -209,7 +213,81 @@ def normalize_search_terms(terms: list) -> list[str]:
     return normalized
 
 
-def jikan_search_anime(query: str, request_id: str | None = None):
+def _normalize_title(value: str | None) -> str:
+    if not value:
+        return ""
+
+    value = unicodedata.normalize("NFKC", value).casefold()
+    return " ".join(re.findall(r"\w+", value, flags=re.UNICODE))
+
+
+def _anime_title_variants(anime: dict) -> list[str]:
+    values = [
+        anime.get("title"),
+        anime.get("title_english"),
+        anime.get("title_japanese"),
+        *(anime.get("title_synonyms") or []),
+    ]
+    return list(dict.fromkeys(filter(None, values)))
+
+
+def _title_match_score(query: str, anime: dict) -> tuple[float, float]:
+    normalized_query = _normalize_title(query)
+    query_tokens = set(normalized_query.split())
+    best_score = 0.0
+    best_sequence_score = 0.0
+
+    for variant in _anime_title_variants(anime):
+        normalized_variant = _normalize_title(variant)
+        if not normalized_variant:
+            continue
+
+        sequence_score = SequenceMatcher(
+            None, normalized_query, normalized_variant
+        ).ratio()
+        variant_tokens = set(normalized_variant.split())
+        token_score = (
+            len(query_tokens & variant_tokens) / len(query_tokens | variant_tokens)
+            if query_tokens and variant_tokens
+            else 0.0
+        )
+
+        if normalized_query == normalized_variant:
+            score = 3.0
+        elif (
+            normalized_variant.startswith(f"{normalized_query} ")
+            or normalized_query.startswith(f"{normalized_variant} ")
+        ):
+            score = 2.0 + max(sequence_score, token_score)
+        else:
+            score = max(sequence_score, token_score)
+
+        if (score, sequence_score) > (best_score, best_sequence_score):
+            best_score = score
+            best_sequence_score = sequence_score
+
+    return best_score, best_sequence_score
+
+
+def select_best_title_matches(
+    query: str,
+    anime_results: list[dict],
+    limit: int = JIKAN_TITLE_MATCH_LIMIT,
+) -> list[dict]:
+    """Keep the Jikan results whose known titles most closely match the query."""
+    indexed_results = list(enumerate(anime_results))
+    indexed_results.sort(
+        key=lambda item: (*_title_match_score(query, item[1]), -item[0]),
+        reverse=True,
+    )
+    return [anime for _, anime in indexed_results[:limit]]
+
+
+def jikan_search_anime(
+    query: str,
+    request_id: str | None = None,
+    result_limit: int = JIKAN_SEARCH_LIMIT,
+):
     started_at = perf_counter()
     last_error = None
     attempts = 0
@@ -238,7 +316,7 @@ def jikan_search_anime(query: str, request_id: str | None = None):
 
             adapted_results = [
                 adapt_anime_result(anime)
-                for anime in results[:JIKAN_SEARCH_LIMIT]
+                for anime in results[:result_limit]
             ]
             logger.info(
                 "request=%s service=jikan query=%r duration_s=%.3f "
@@ -270,11 +348,15 @@ def jikan_search_anime(query: str, request_id: str | None = None):
 def search_terms_concurrently(
     terms: list[str],
     request_id: str | None = None,
+    search_function=None,
 ) -> list:
     if not terms:
         return []
 
-    search = partial(jikan_search_anime, request_id=request_id)
+    search = partial(
+        search_function or jikan_search_anime,
+        request_id=request_id,
+    )
     max_workers = min(JIKAN_MAX_CONCURRENCY, len(terms))
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -288,7 +370,20 @@ def search_anime_by_titles(
     request_id: str | None = None,
 ):
     terms = normalize_search_terms(titles)
-    return search_terms_concurrently(terms, request_id=request_id)
+
+    def search_title(query: str, request_id: str | None = None) -> list[dict]:
+        results = jikan_search_anime(
+            query,
+            request_id=request_id,
+            result_limit=JIKAN_TITLE_SEARCH_SCAN_LIMIT,
+        )
+        return select_best_title_matches(query, results)
+
+    return search_terms_concurrently(
+        terms,
+        request_id=request_id,
+        search_function=search_title,
+    )
 
 
 def search_anime_by_keywords(
