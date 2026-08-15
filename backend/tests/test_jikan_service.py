@@ -68,6 +68,29 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         self.assertTrue(all(result["request_id"] == "rec-test" for result in results))
         self.assertEqual(max_active, 3)
 
+    def test_concurrent_search_takes_turns_between_query_result_groups(self):
+        def fake_search(query, request_id=None):
+            return [
+                {"mal_id": f"{query}-{position}"}
+                for position in range(1, 4)
+            ]
+
+        with patch.object(
+            jikan_service,
+            "jikan_search_anime",
+            side_effect=fake_search,
+        ):
+            results = jikan_service.search_terms_concurrently(["a", "b", "c"])
+
+        self.assertEqual(
+            [result["mal_id"] for result in results],
+            [
+                "a-1", "b-1", "c-1",
+                "a-2", "b-2", "c-2",
+                "a-3", "b-3", "c-3",
+            ],
+        )
+
     def test_keyword_search_normalizes_deduplicates_and_caps_terms(self):
         keywords = ["One", " one ", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
 

@@ -107,15 +107,26 @@ Rules:
 - Score based on STORY + THEMES + CHARACTER ARC + SYNOPSIS
 - NOT popularity or rating
 - Be strict and reasoning-based
+- Require substantial alignment with the core request; a shared keyword,
+  character label, genre, or superficial similarity is not enough by itself
+- Prefer candidates whose central narrative demonstrates the requested journey,
+  conflict, mood, or development over candidates that only loosely resemble it
+- Do not select a candidate when the reason would mainly explain why it lacks,
+  contradicts, or only weakly satisfies the user's request
 - Write a specific 1-2 sentence reason explaining how the anime's story,
   themes, or character journey connects to the user's exact request
 - Mention concrete details from the provided synopsis instead of generic praise
 - Keep each reason under 45 words and do not reveal spoilers
 - Return recommendations from distinct franchises
 - Include at most one installment from the same franchise
-- Prefer the best entry point, usually the first season or a standalone work
-- Include a sequel only when the user explicitly requests that sequel or asks
-  for more entries from a particular franchise
+- Within a franchise, choose the installment whose central story best matches
+  the user's request
+- When relevance is comparable, prefer the canonical mainline entry point over
+  a spin-off, parody, recap, special, or movie
+- Never prefer a spin-off merely because its title or synopsis contains a more
+  literal keyword match than a strongly relevant mainline entry
+- If the original entry is unavailable, a mainline sequel may represent the
+  franchise even when the user did not explicitly request that sequel
 - Return sorted highest match first
 - Return only anime from the provided ANIME LIST
 """

@@ -34,10 +34,12 @@ function viewProps(routeName) {
 
 function toCardResult(recommendation) {
   const anime = recommendation.anime
+  const displayTitle = anime.title_english || anime.title
 
   return {
     id: anime.mal_id,
-    title: anime.title_english || anime.title,
+    title: displayTitle,
+    romajiName: anime.title !== displayTitle ? anime.title : '',
     japaneseName: anime.title_japanese || '',
     image: anime.image || '',
     episodes: anime.episodes ? String(anime.episodes) : 'N/A',

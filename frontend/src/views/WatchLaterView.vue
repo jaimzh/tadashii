@@ -52,6 +52,9 @@ const watched = computed(() =>
 
             <div class="item-copy">
               <h3>{{ anime.title }}</h3>
+              <p v-if="anime.romajiName" class="japanese-title">
+                {{ anime.romajiName }}
+              </p>
               <p v-if="anime.japaneseName" class="japanese-title">
                 {{ anime.japaneseName }}
               </p>
@@ -94,6 +97,12 @@ const watched = computed(() =>
 
             <div class="item-copy">
               <h3>{{ anime.title }}</h3>
+              <p v-if="anime.romajiName" class="japanese-title">
+                {{ anime.romajiName }}
+              </p>
+              <p v-if="anime.japaneseName" class="japanese-title">
+                {{ anime.japaneseName }}
+              </p>
               <p class="item-meta">
                 {{ [anime.type, anime.year].filter(Boolean).join(' · ') || 'Details unavailable' }}
               </p>

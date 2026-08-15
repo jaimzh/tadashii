@@ -360,8 +360,17 @@ def search_terms_concurrently(
     max_workers = min(JIKAN_MAX_CONCURRENCY, len(terms))
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        result_groups = executor.map(search, terms)
-        return [anime for group in result_groups for anime in group]
+        result_groups = list(executor.map(search, terms))
+
+    # Take one candidate from each query before taking a second candidate from
+    # any query. This prevents the earliest search term from filling the pool.
+    max_group_size = max((len(group) for group in result_groups), default=0)
+    return [
+        group[index]
+        for index in range(max_group_size)
+        for group in result_groups
+        if index < len(group)
+    ]
 
 
 #our main boy 1

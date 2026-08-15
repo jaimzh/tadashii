@@ -64,7 +64,12 @@ const airedLabel = computed(() => {
           <header class="modal-header">
             <div class="title-block">
               <h2 class="modal-title">{{ result.title }}</h2>
-              <p v-if="result.japaneseName" class="japanese-name">
+              <p v-if="result.romajiName" class="alternate-title">
+                <span class="title-label">Romaji</span>
+                {{ result.romajiName }}
+              </p>
+              <p v-if="result.japaneseName" class="alternate-title">
+                <span class="title-label">Japanese</span>
                 {{ result.japaneseName }}
               </p>
             </div>
@@ -289,10 +294,25 @@ const airedLabel = computed(() => {
   color: var(--modal-text);
 }
 
-.japanese-name {
+.alternate-title {
   margin-top: 0.45rem;
   font-size: var(--font-size-sm);
   color: var(--modal-muted);
+}
+
+.alternate-title + .alternate-title {
+  margin-top: 0.2rem;
+}
+
+.title-label {
+  display: inline-block;
+  min-width: 4.8rem;
+  margin-right: 0.35rem;
+  color: var(--modal-text);
+  font-size: var(--font-size-xs);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .quick-stats {

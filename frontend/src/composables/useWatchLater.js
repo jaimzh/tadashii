@@ -57,6 +57,7 @@ function toggleSaved(result) {
   savedAnime.value.push({
     malId: result.id,
     title: result.title,
+    romajiName: result.romajiName || '',
     japaneseName: result.japaneseName || '',
     image: result.image || '',
     type: result.type || '',

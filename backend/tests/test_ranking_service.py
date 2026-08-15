@@ -63,7 +63,23 @@ class RankingServiceTests(unittest.TestCase):
             generate.call_args.kwargs["contents"],
         )
         self.assertIn(
-            "Prefer the best entry point",
+            "prefer the canonical mainline entry point",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "Never prefer a spin-off merely because",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "a mainline sequel may represent the",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "a shared keyword",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "Do not select a candidate when the reason would mainly explain why",
             generate.call_args.kwargs["contents"],
         )
 
