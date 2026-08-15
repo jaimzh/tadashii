@@ -27,7 +27,7 @@ def main():
     print(intent)
     print()
 
-    suggestions = suggest_anime(intent)
+    suggestions = suggest_anime(user_prompt)
     print("AI SUGGESTIONS")
     print(suggestions)
     print()

@@ -1,0 +1,108 @@
+import unittest
+from threading import Barrier, Event
+from time import perf_counter
+from unittest.mock import patch
+
+from fastapi import HTTPException
+from pydantic import ValidationError
+
+from app.api.recommend import recommend
+from app.models.schema import RecommendRequest
+
+
+VALID_INTENT = {
+    "is_valid_prompt": True,
+    "validation_reason": "",
+    "search_keywords": ["thriller"],
+    "semantic_tags": [],
+    "themes": [],
+    "mood": "dark",
+    "genres": ["Thriller"],
+    "character_arc": "",
+}
+
+
+class RecommendApiTests(unittest.TestCase):
+    def test_intent_and_suggestions_run_concurrently(self):
+        both_started = Barrier(2)
+
+        def analyze(_prompt):
+            both_started.wait(timeout=1)
+            return VALID_INTENT
+
+        def suggest(_prompt):
+            both_started.wait(timeout=1)
+            return {"suggested_anime": []}
+
+        with (
+            patch("app.api.recommend.analyze_prompt", side_effect=analyze),
+            patch("app.api.recommend.suggest_anime", side_effect=suggest),
+            patch("app.api.recommend.search_anime_by_titles", return_value=[]),
+            patch("app.api.recommend.search_anime_by_intent", return_value=[]),
+        ):
+            with self.assertRaises(HTTPException) as raised:
+                recommend(RecommendRequest(prompt="dark thriller anime"))
+
+        self.assertEqual(raised.exception.status_code, 404)
+
+    def test_invalid_prompt_stops_before_jikan(self):
+        release_suggestion = Event()
+        invalid_intent = {
+            **VALID_INTENT,
+            "is_valid_prompt": False,
+            "validation_reason": "Enter an understandable anime preference.",
+            "search_keywords": [],
+            "genres": [],
+        }
+
+        def slow_suggestion(_prompt):
+            release_suggestion.wait(timeout=2)
+            return {"suggested_anime": []}
+
+        started_at = perf_counter()
+
+        try:
+            with (
+                patch("app.api.recommend.analyze_prompt", return_value=invalid_intent),
+                patch("app.api.recommend.suggest_anime", side_effect=slow_suggestion),
+                patch("app.api.recommend.search_anime_by_titles") as title_search,
+                patch("app.api.recommend.search_anime_by_intent") as intent_search,
+                patch("app.api.recommend.rank_anime") as rank,
+            ):
+                with self.assertRaises(HTTPException) as raised:
+                    recommend(RecommendRequest(prompt="caahdhdhdhfdj"))
+        finally:
+            release_suggestion.set()
+
+        self.assertEqual(raised.exception.status_code, 422)
+        self.assertIn("understandable", raised.exception.detail)
+        self.assertLess(perf_counter() - started_at, 1)
+        title_search.assert_not_called()
+        intent_search.assert_not_called()
+        rank.assert_not_called()
+
+    def test_zero_jikan_results_stop_before_ranking(self):
+        with (
+            patch("app.api.recommend.analyze_prompt", return_value=VALID_INTENT),
+            patch(
+                "app.api.recommend.suggest_anime",
+                return_value={"suggested_anime": ["Monster"]},
+            ),
+            patch("app.api.recommend.search_anime_by_titles", return_value=[]),
+            patch("app.api.recommend.search_anime_by_intent", return_value=[]),
+            patch("app.api.recommend.rank_anime") as rank,
+        ):
+            with self.assertRaises(HTTPException) as raised:
+                recommend(RecommendRequest(prompt="an unknown anime idea"))
+
+        self.assertEqual(raised.exception.status_code, 404)
+        self.assertIn("No anime matches", raised.exception.detail)
+        rank.assert_not_called()
+
+    def test_blank_prompt_is_rejected_by_request_schema(self):
+        with self.assertRaises(ValidationError):
+            RecommendRequest(prompt="   ")
+
+
+if __name__ == "__main__":
+    unittest.main()

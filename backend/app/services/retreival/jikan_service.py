@@ -1,8 +1,12 @@
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 import time
+from time import perf_counter
 
 import requests
 
-from app.config import JIKAN_BASE_URL, JIKAN_SEARCH_LIMIT
+from app.config import JIKAN_BASE_URL, JIKAN_MAX_CONCURRENCY, JIKAN_SEARCH_LIMIT
+from app.observability.pipeline_timing import logger
 
 MAX_INTENT_SEARCH_TERMS = 8
 MAX_QUERY_LENGTH = 80
@@ -112,21 +116,50 @@ def get_anime_trailer(mal_id: int) -> str | None:
     return trailer.get("url")
 
 
-def add_missing_japanese_titles(recommendations: list) -> list:
-    """Complete missing Japanese titles before recommendations reach the frontend."""
+def add_missing_japanese_titles(
+    recommendations: list,
+    stats: dict | None = None,
+) -> list:
+    """Complete missing Japanese titles and optionally report enrichment counts."""
+    enrichment_stats = {
+        "total": len(recommendations),
+        "already_present": 0,
+        "lookups": 0,
+        "enriched": 0,
+        "lookup_failed": 0,
+        "still_missing": 0,
+    }
+
     for recommendation in recommendations:
         anime = getattr(recommendation, "anime", None)
 
-        if not anime or anime.title_japanese:
+        if not anime:
+            enrichment_stats["still_missing"] += 1
             continue
+
+        if anime.title_japanese:
+            enrichment_stats["already_present"] += 1
+            continue
+
+        enrichment_stats["lookups"] += 1
 
         try:
             details = get_anime_details(anime.mal_id)
         except RuntimeError:
             # Missing optional metadata should not fail the recommendation request.
+            enrichment_stats["lookup_failed"] += 1
+            enrichment_stats["still_missing"] += 1
             continue
 
         anime.title_japanese = details.get("title_japanese")
+
+        if anime.title_japanese:
+            enrichment_stats["enriched"] += 1
+        else:
+            enrichment_stats["still_missing"] += 1
+
+    if stats is not None:
+        stats.update(enrichment_stats)
 
     return recommendations
 
@@ -157,10 +190,14 @@ def normalize_search_terms(terms: list) -> list[str]:
     return normalized
 
 
-def jikan_search_anime(query: str):
+def jikan_search_anime(query: str, request_id: str | None = None):
+    started_at = perf_counter()
     last_error = None
+    attempts = 0
 
     for attempt in range(JIKAN_RETRY_COUNT + 1):
+        attempts = attempt + 1
+
         try:
             response = requests.get(
                 f"{JIKAN_BASE_URL.rstrip('/')}/anime",
@@ -180,41 +217,71 @@ def jikan_search_anime(query: str):
             if not isinstance(results, list):
                 raise RuntimeError("Anime API returned an invalid search response")
 
-            return [adapt_anime_result(anime) for anime in results[:JIKAN_SEARCH_LIMIT]]
+            adapted_results = [
+                adapt_anime_result(anime)
+                for anime in results[:JIKAN_SEARCH_LIMIT]
+            ]
+            logger.info(
+                "request=%s service=jikan query=%r duration_s=%.3f "
+                "status=ok attempts=%d count=%d",
+                request_id or "untracked",
+                query,
+                perf_counter() - started_at,
+                attempts,
+                len(adapted_results),
+            )
+            return adapted_results
         except requests.RequestException as exc:
             last_error = str(exc)
             time.sleep(1 + attempt)
 
-    raise RuntimeError(last_error or f"Jikan search failed for query '{query}'")
+    error_message = last_error or f"Jikan search failed for query '{query}'"
+    logger.warning(
+        "request=%s service=jikan query=%r duration_s=%.3f "
+        "status=error attempts=%d error=%r",
+        request_id or "untracked",
+        query,
+        perf_counter() - started_at,
+        attempts,
+        error_message,
+    )
+    raise RuntimeError(error_message)
+
+
+def search_terms_concurrently(
+    terms: list[str],
+    request_id: str | None = None,
+) -> list:
+    if not terms:
+        return []
+
+    search = partial(jikan_search_anime, request_id=request_id)
+    max_workers = min(JIKAN_MAX_CONCURRENCY, len(terms))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        result_groups = executor.map(search, terms)
+        return [anime for group in result_groups for anime in group]
 
 
 #our main boy 1
-def search_anime_by_titles(titles: list[str]):
-    results = []
-
-    for title in normalize_search_terms(titles):
-        anime = jikan_search_anime(title)
-
-        if anime:
-            results.extend(anime)
-
-    return results
+def search_anime_by_titles(
+    titles: list[str],
+    request_id: str | None = None,
+):
+    terms = normalize_search_terms(titles)
+    return search_terms_concurrently(terms, request_id=request_id)
 
 
-def search_anime_by_keywords(keywords: list[str]):
-    results = []
-
-    for keyword in normalize_search_terms(keywords)[:MAX_INTENT_SEARCH_TERMS]:
-        anime = jikan_search_anime(keyword)
-
-        if anime:
-            results.extend(anime)
-
-    return results
+def search_anime_by_keywords(
+    keywords: list[str],
+    request_id: str | None = None,
+):
+    terms = normalize_search_terms(keywords)[:MAX_INTENT_SEARCH_TERMS]
+    return search_terms_concurrently(terms, request_id=request_id)
 
 
 #our main boy2
-def search_anime_by_intent(intent: dict):
+def search_anime_by_intent(intent: dict, request_id: str | None = None):
     search_terms = []
 
     search_terms.extend(intent.get("search_keywords", []))
@@ -231,4 +298,4 @@ def search_anime_by_intent(intent: dict):
     if character_arc:
         search_terms.append(character_arc)
 
-    return search_anime_by_keywords(search_terms)
+    return search_anime_by_keywords(search_terms, request_id=request_id)

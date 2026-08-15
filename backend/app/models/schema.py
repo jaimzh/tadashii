@@ -1,7 +1,28 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 class RecommendRequest(BaseModel):
-    prompt: str
+    prompt: str = Field(min_length=2, max_length=500)
+
+    @field_validator("prompt")
+    @classmethod
+    def prompt_must_have_content(cls, prompt: str) -> str:
+        prompt = prompt.strip()
+
+        if not prompt:
+            raise ValueError("Prompt must contain a meaningful anime request")
+
+        return prompt
+
+
+class IntentAnalysis(BaseModel):
+    is_valid_prompt: bool
+    validation_reason: str = ""
+    search_keywords: list[str] = []
+    semantic_tags: list[str] = []
+    themes: list[str] = []
+    mood: str = ""
+    genres: list[str] = []
+    character_arc: str = ""
 
 
 class TrailerResponse(BaseModel):

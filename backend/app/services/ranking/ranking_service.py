@@ -3,9 +3,16 @@
 from google import genai
 import json
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL
+from app.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_TIMEOUT_MS
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = genai.Client(
+    api_key=GEMINI_API_KEY,
+    http_options={
+        "timeout": GEMINI_TIMEOUT_MS,
+        "retry_options": {"attempts": 1},
+    },
+)
+TARGET_RECOMMENDATION_COUNT = 10
 
 
 def build_rank_payload(anime_list: list):
@@ -22,6 +29,11 @@ def build_rank_payload(anime_list: list):
 
 def rank_anime(prompt: str, intent: dict, anime_list: list):
     anime_payload = build_rank_payload(anime_list)
+
+    if not anime_payload:
+        return []
+
+    requested_count = min(TARGET_RECOMMENDATION_COUNT, len(anime_payload))
 
     prompt_payload = f"""
 You are an anime ranking engine.
@@ -50,6 +62,8 @@ Return ONLY valid JSON:
 ]
 
 Rules:
+- Return exactly {requested_count} recommendations
+- If fewer than {TARGET_RECOMMENDATION_COUNT} candidates are provided, return every candidate
 - prompt_match must be a number from 0 to 100
 - Score based on STORY + THEMES + CHARACTER ARC + SYNOPSIS
 - NOT popularity or rating
@@ -67,4 +81,9 @@ Rules:
         contents=prompt_payload
     )
 
-    return json.loads(response.text)
+    rankings = json.loads(response.text)
+
+    if not isinstance(rankings, list):
+        raise ValueError("Ranking model returned a non-list response")
+
+    return rankings[:requested_count]

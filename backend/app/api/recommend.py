@@ -1,6 +1,11 @@
+from concurrent.futures import ThreadPoolExecutor
+from time import perf_counter
+from uuid import uuid4
+
 from fastapi import APIRouter, HTTPException
 
 from app.models.schema import RecommendRequest, TrailerResponse
+from app.observability.pipeline_timing import logger, timed_stage
 from app.services.filter.filter_service import filter_candidates
 from app.services.intent.ai_intent_service import analyze_prompt
 from app.services.normalization.normalize_service import normalize_anime_results
@@ -8,7 +13,6 @@ from app.services.ranking.ranking_service import rank_anime
 from app.services.response.response_builder_service import build_recommendation_results
 from app.services.retreival.ai_suggest import suggest_anime
 from app.services.retreival.jikan_service import (
-    add_missing_japanese_titles,
     get_anime_trailer,
     search_anime_by_intent,
     search_anime_by_titles,
@@ -16,6 +20,18 @@ from app.services.retreival.jikan_service import (
 from app.services.retreival.merge_service import merge_results
 
 router = APIRouter()
+
+
+def _analyze_prompt(request_id: str, prompt: str) -> dict:
+    with timed_stage(request_id, "intent_parsing"):
+        return analyze_prompt(prompt)
+
+
+def _suggest_anime(request_id: str, prompt: str) -> dict:
+    with timed_stage(request_id, "anime_suggestions") as stage:
+        suggestions = suggest_anime(prompt)
+        stage["count"] = len(suggestions.get("suggested_anime") or [])
+        return suggestions
 
 
 @router.get("/anime/{mal_id}/trailer", response_model=TrailerResponse)
@@ -33,24 +49,130 @@ def anime_trailer(mal_id: int):
 
 @router.post("/recommend")
 def recommend(data: RecommendRequest):
-    intent = analyze_prompt(data.prompt)
-
-    ai_suggestions = suggest_anime(intent)
-    suggested_titles = ai_suggestions.get("suggested_anime", [])
+    request_id = f"rec-{uuid4().hex[:8]}"
+    request_started_at = perf_counter()
+    logger.info("request=%s pipeline=recommendation status=started", request_id)
 
     try:
-        title_results = search_anime_by_titles(suggested_titles)
-        intent_results = search_anime_by_intent(intent)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        executor = ThreadPoolExecutor(max_workers=2)
+        intent_future = executor.submit(
+            _analyze_prompt,
+            request_id,
+            data.prompt,
+        )
+        suggestions_future = executor.submit(
+            _suggest_anime,
+            request_id,
+            data.prompt,
+        )
 
-    merged_results = merge_results(title_results, intent_results)
-    normalized_results = normalize_anime_results(merged_results)
-    filtered_results = filter_candidates(normalized_results)
+        try:
+            intent = intent_future.result()
+        except Exception as exc:
+            executor.shutdown(wait=False, cancel_futures=True)
+            raise HTTPException(
+                status_code=503,
+                detail="The recommendation AI is temporarily unavailable.",
+            ) from exc
 
-    rankings = rank_anime(data.prompt, intent, filtered_results)
-    results = build_recommendation_results(rankings, filtered_results)
-    results = add_missing_japanese_titles(results)
+        if not intent.get("is_valid_prompt", False):
+            executor.shutdown(wait=False, cancel_futures=True)
+            reason = intent.get("validation_reason") or (
+                "Enter an understandable anime request with a genre, mood, "
+                "theme, story idea, or anime title."
+            )
+            raise HTTPException(status_code=422, detail=reason)
+
+        try:
+            ai_suggestions = suggestions_future.result()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="The recommendation AI is temporarily unavailable.",
+            ) from exc
+        finally:
+            executor.shutdown(wait=True, cancel_futures=True)
+
+        suggested_titles = ai_suggestions.get("suggested_anime", [])
+
+        try:
+            with timed_stage(request_id, "title_retrieval") as stage:
+                title_results = search_anime_by_titles(
+                    suggested_titles,
+                    request_id=request_id,
+                )
+                stage["count"] = len(title_results)
+
+            with timed_stage(request_id, "intent_retrieval") as stage:
+                intent_results = search_anime_by_intent(
+                    intent,
+                    request_id=request_id,
+                )
+                stage["count"] = len(intent_results)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+        with timed_stage(request_id, "merge") as stage:
+            merged_results = merge_results(title_results, intent_results)
+            stage["count"] = len(merged_results)
+
+        if not merged_results:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "No anime matches were found. Try a clearer request with "
+                    "a genre, mood, theme, or anime title."
+                ),
+            )
+
+        with timed_stage(request_id, "normalize") as stage:
+            normalized_results = normalize_anime_results(merged_results)
+            stage["count"] = len(normalized_results)
+
+        with timed_stage(request_id, "filter") as stage:
+            filtered_results = filter_candidates(normalized_results)
+            stage["before"] = len(normalized_results)
+            stage["after"] = len(filtered_results)
+
+        if not filtered_results:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "No usable anime matches were found. Try changing the "
+                    "genre, mood, theme, or example title in your request."
+                ),
+            )
+
+        try:
+            with timed_stage(request_id, "ranking") as stage:
+                rankings = rank_anime(data.prompt, intent, filtered_results)
+                stage["count"] = len(rankings)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="The recommendation AI is temporarily unavailable.",
+            ) from exc
+
+        with timed_stage(request_id, "response_building") as stage:
+            results = build_recommendation_results(rankings, filtered_results)
+            stage["count"] = len(results)
+
+    except Exception:
+        duration = perf_counter() - request_started_at
+        logger.error(
+            "request=%s stage=total duration_s=%.3f status=error",
+            request_id,
+            duration,
+        )
+        raise
+
+    duration = perf_counter() - request_started_at
+    logger.info(
+        "request=%s stage=total duration_s=%.3f status=ok results=%d",
+        request_id,
+        duration,
+        len(results),
+    )
 
     return {
         "input": data.prompt,

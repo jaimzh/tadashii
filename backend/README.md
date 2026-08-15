@@ -61,6 +61,8 @@ Expected intent shape:
 
 ```json
 {
+  "is_valid_prompt": true,
+  "validation_reason": "",
   "search_keywords": [],
   "semantic_tags": [],
   "themes": [],
@@ -70,7 +72,7 @@ Expected intent shape:
 }
 ```
 
-This stage should only understand the user's request. It should not call Jikan, filter anime, rank anime, or build the final response.
+This stage also validates that the prompt is understandable and relevant to anime discovery. Invalid prompts stop before Jikan with HTTP 422. Intent parsing and AI title suggestions run concurrently from the same user prompt.
 
 ### 2. Candidate Retrieval
 
@@ -286,11 +288,17 @@ Required or supported environment variables:
 ```env
 GEMINI_API_KEY=your_api_key_here
 GEMINI_MODEL=gemini-3.1-flash-lite
+GEMINI_TIMEOUT_MS=30000
 JIKAN_BASE_URL=https://jikan-edge.lucas-hdo.workers.dev/v1
 JIKAN_SEARCH_LIMIT=10
+JIKAN_MAX_CONCURRENCY=3
 ```
 
 `JIKAN_SEARCH_LIMIT` controls how many jikan-edge results are retained from each search query. The retrieval service adapts jikan-edge's camelCase search results to the internal Jikan-v4-shaped dictionaries expected by the rest of the pipeline.
+
+`JIKAN_MAX_CONCURRENCY` limits how many independent Jikan searches run at once within title retrieval and intent retrieval. Results retain their original query order even when requests finish out of order.
+
+`GEMINI_TIMEOUT_MS` bounds each Gemini request. Gemini retries are disabled so an upstream stall cannot hold the recommendation pipeline indefinitely.
 
 ## Running The Server
 
@@ -310,6 +318,30 @@ Health check:
 
 ```text
 http://127.0.0.1:8002/health
+```
+
+## Pipeline Timing Logs
+
+Every `POST /api/recommend` request receives a short request ID. The backend logs the duration and output count of each recommendation stage to the terminal and to:
+
+```text
+logs/pipeline_timings.txt
+```
+
+The timing file rotates at 5 MB and retains up to five backups. Runtime logs are excluded from Git.
+
+Watch the timing log from the repository root with:
+
+```powershell
+Get-Content backend\logs\pipeline_timings.txt -Wait
+```
+
+Example:
+
+```text
+request=rec-a81f93c2 stage=title_retrieval duration_s=4.821 status=ok count=47
+request=rec-a81f93c2 stage=filter duration_s=0.001 status=ok before=54 after=31
+request=rec-a81f93c2 stage=total duration_s=15.431 status=ok results=10
 ```
 
 ## Manual Smoke Test

@@ -1,3 +1,5 @@
+import threading
+import time
 import unittest
 from unittest.mock import Mock, patch
 
@@ -5,6 +7,60 @@ from app.services.retreival import jikan_service
 
 
 class JikanEdgeAdapterTests(unittest.TestCase):
+    def test_concurrent_search_preserves_term_order_and_worker_limit(self):
+        active = 0
+        max_active = 0
+        lock = threading.Lock()
+        delays = {"first": 0.04, "second": 0.03, "third": 0.02, "fourth": 0.01}
+
+        def fake_search(query, request_id=None):
+            nonlocal active, max_active
+
+            with lock:
+                active += 1
+                max_active = max(max_active, active)
+
+            time.sleep(delays[query])
+
+            with lock:
+                active -= 1
+
+            return [{"mal_id": query, "request_id": request_id}]
+
+        with (
+            patch.object(jikan_service, "JIKAN_MAX_CONCURRENCY", 3),
+            patch.object(jikan_service, "jikan_search_anime", side_effect=fake_search),
+        ):
+            results = jikan_service.search_terms_concurrently(
+                ["first", "second", "third", "fourth"],
+                request_id="rec-test",
+            )
+
+        self.assertEqual(
+            [result["mal_id"] for result in results],
+            ["first", "second", "third", "fourth"],
+        )
+        self.assertTrue(all(result["request_id"] == "rec-test" for result in results))
+        self.assertEqual(max_active, 3)
+
+    def test_keyword_search_normalizes_deduplicates_and_caps_terms(self):
+        keywords = ["One", " one ", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+
+        with patch.object(
+            jikan_service,
+            "search_terms_concurrently",
+            return_value=[],
+        ) as search:
+            jikan_service.search_anime_by_keywords(
+                keywords,
+                request_id="rec-test",
+            )
+
+        search.assert_called_once_with(
+            ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"],
+            request_id="rec-test",
+        )
+
     def test_adapts_edge_search_result_to_internal_shape(self):
         result = jikan_service.adapt_anime_result(
             {
@@ -90,24 +146,37 @@ class JikanEdgeAdapterTests(unittest.TestCase):
     def test_adds_missing_japanese_title_to_final_recommendation(self):
         anime = Mock(mal_id=20, title_japanese=None)
         recommendation = Mock(anime=anime)
+        stats = {}
 
         with patch.object(
             jikan_service,
             "get_anime_details",
             return_value={"title_japanese": "ナルト"},
         ):
-            results = jikan_service.add_missing_japanese_titles([recommendation])
+            results = jikan_service.add_missing_japanese_titles(
+                [recommendation], stats=stats
+            )
 
         self.assertEqual(results[0].anime.title_japanese, "ナルト")
+
+        self.assertEqual(stats["lookups"], 1)
+        self.assertEqual(stats["enriched"], 1)
+        self.assertEqual(stats["still_missing"], 0)
 
     def test_keeps_existing_japanese_title_without_detail_request(self):
         anime = Mock(mal_id=20, title_japanese="ナルト")
         recommendation = Mock(anime=anime)
 
+        stats = {}
+
         with patch.object(jikan_service, "get_anime_details") as get_details:
-            jikan_service.add_missing_japanese_titles([recommendation])
+            jikan_service.add_missing_japanese_titles(
+                [recommendation], stats=stats
+            )
 
         get_details.assert_not_called()
+        self.assertEqual(stats["already_present"], 1)
+        self.assertEqual(stats["lookups"], 0)
 
 
 if __name__ == "__main__":
