@@ -74,13 +74,13 @@ const airedLabel = computed(() => {
           </div>
 
           <dl class="details-grid">
-            <div v-if="airedLabel" class="detail-item">
+            <div class="detail-item">
               <dt>Aired</dt>
-              <dd>{{ airedLabel }}</dd>
+              <dd>{{ airedLabel || (result.trailerLoading ? 'Loading…' : 'N/A') }}</dd>
             </div>
-            <div v-if="result.status" class="detail-item">
+            <div class="detail-item">
               <dt>Status</dt>
-              <dd>{{ result.status }}</dd>
+              <dd>{{ result.status || (result.trailerLoading ? 'Loading…' : 'N/A') }}</dd>
             </div>
             <div v-if="result.type" class="detail-item">
               <dt>Format</dt>
@@ -163,15 +163,20 @@ const airedLabel = computed(() => {
   width: min(100%, 880px);
   max-height: min(86vh, 680px);
   overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 2rem;
   border: 1px solid var(--modal-border);
-  border-radius: 28px;
+  border-radius: 20px;
   background: var(--modal-surface);
   color: var(--modal-text);
   box-shadow:
     0 32px 90px rgba(0, 0, 0, 0.7),
     0 0 0 1px color-mix(in srgb, var(--text-main) 3%, transparent) inset;
   animation: modal-in 220ms ease-out;
+}
+
+.modal-shell::-webkit-scrollbar-track {
+  margin-block: 12px;
 }
 
 @keyframes modal-in {
