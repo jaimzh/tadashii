@@ -3,7 +3,12 @@
 import json
 from google import genai
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_TIMEOUT_MS
+from app.config import (
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    GEMINI_TIMEOUT_MS,
+    INTENT_KEYWORD_LIMIT,
+)
 from app.models.schema import IntentAnalysis
 
 client = genai.Client(
@@ -66,7 +71,7 @@ Rules:
 - genres:
   Use real anime genres only
 
-- maximum 5 keywords
+- maximum {INTENT_KEYWORD_LIMIT} keywords
 
 Return JSON only.
 """
@@ -75,5 +80,6 @@ Return JSON only.
         model=GEMINI_MODEL, contents=prompt
     )
 
-    parsed = json.loads(response.text)
-    return IntentAnalysis.model_validate(parsed).model_dump()
+    parsed = IntentAnalysis.model_validate(json.loads(response.text)).model_dump()
+    parsed["search_keywords"] = parsed["search_keywords"][:INTENT_KEYWORD_LIMIT]
+    return parsed

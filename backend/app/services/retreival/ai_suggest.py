@@ -1,7 +1,13 @@
 import json
 from google import genai
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_TIMEOUT_MS
+from app.config import (
+    AI_SUGGESTION_MAX_COUNT,
+    AI_SUGGESTION_MIN_COUNT,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
+    GEMINI_TIMEOUT_MS,
+)
 
 client = genai.Client(
     api_key=GEMINI_API_KEY,
@@ -20,7 +26,7 @@ You are an anime recommendation engine.
 Given this user request:
 {json.dumps(user_prompt)}
 
-Suggest 5-10 or as much anime titles that best match.
+Suggest {AI_SUGGESTION_MIN_COUNT}-{AI_SUGGESTION_MAX_COUNT} anime titles that best match.
 
 Rules:
 - If the request is gibberish, unrelated to anime discovery, or not
@@ -40,4 +46,7 @@ Return format:
         contents=prompt
     )
 
-    return json.loads(response.text)
+    parsed = json.loads(response.text)
+    suggestions = parsed.get("suggested_anime") or []
+    parsed["suggested_anime"] = suggestions[:AI_SUGGESTION_MAX_COUNT]
+    return parsed

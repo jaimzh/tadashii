@@ -54,6 +54,18 @@ class RankingServiceTests(unittest.TestCase):
 
         self.assertEqual(len(rankings), 10)
         self.assertIn("Return exactly 10 recommendations", generate.call_args.kwargs["contents"])
+        self.assertIn(
+            "Return recommendations from distinct franchises",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "Include at most one installment from the same franchise",
+            generate.call_args.kwargs["contents"],
+        )
+        self.assertIn(
+            "Prefer the best entry point",
+            generate.call_args.kwargs["contents"],
+        )
 
     def test_requests_every_candidate_when_fewer_than_ten_exist(self):
         candidates = [

@@ -1,17 +1,33 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+import re
 import time
 from time import perf_counter
 
 import requests
 
-from app.config import JIKAN_BASE_URL, JIKAN_MAX_CONCURRENCY, JIKAN_SEARCH_LIMIT
+from app.config import (
+    INTENT_SEARCH_TERM_LIMIT,
+    JIKAN_BASE_URL,
+    JIKAN_MAX_CONCURRENCY,
+    JIKAN_RETRY_COUNT,
+    JIKAN_SEARCH_LIMIT,
+    JIKAN_TIMEOUT_SECONDS,
+    SEARCH_QUERY_MAX_LENGTH,
+)
 from app.observability.pipeline_timing import logger
 
-MAX_INTENT_SEARCH_TERMS = 8
-MAX_QUERY_LENGTH = 80
-JIKAN_TIMEOUT_SECONDS = 10
-JIKAN_RETRY_COUNT = 2
+MAL_REWRITE_ATTRIBUTION = re.compile(
+    r"\s*\[Written by MAL Rewrite\]\s*$",
+    flags=re.IGNORECASE,
+)
+
+
+def clean_synopsis(synopsis: str | None) -> str | None:
+    if not synopsis:
+        return synopsis
+
+    return MAL_REWRITE_ATTRIBUTION.sub("", synopsis).rstrip()
 
 
 def _named_items(items: list | None) -> list[dict]:
@@ -39,6 +55,7 @@ def adapt_anime_result(anime: dict) -> dict:
     )
 
     trailer = anime.get("trailer") or {}
+    aired = anime.get("aired") or {}
     titles = anime.get("titles") or []
 
     def title_by_type(title_type: str) -> str | None:
@@ -64,7 +81,9 @@ def adapt_anime_result(anime: dict) -> dict:
         "episodes": anime.get("episodes"),
         "status": anime.get("status"),
         "airing": anime.get("airing"),
-        "synopsis": anime.get("synopsis"),
+        "aired_from": aired.get("from"),
+        "aired_to": aired.get("to"),
+        "synopsis": clean_synopsis(anime.get("synopsis")),
         "background": anime.get("background"),
         "season": anime.get("season"),
         "year": anime.get("year"),
@@ -177,7 +196,7 @@ def normalize_search_terms(terms: list) -> list[str]:
 
         term = term.strip()
 
-        if not term or len(term) > MAX_QUERY_LENGTH:
+        if not term or len(term) > SEARCH_QUERY_MAX_LENGTH:
             continue
 
         key = term.lower()
@@ -276,7 +295,7 @@ def search_anime_by_keywords(
     keywords: list[str],
     request_id: str | None = None,
 ):
-    terms = normalize_search_terms(keywords)[:MAX_INTENT_SEARCH_TERMS]
+    terms = normalize_search_terms(keywords)[:INTENT_SEARCH_TERM_LIMIT]
     return search_terms_concurrently(terms, request_id=request_id)
 
 

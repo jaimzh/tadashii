@@ -2,10 +2,12 @@ from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
-from app.models.schema import RecommendRequest, TrailerResponse
+from app.config import RECOMMENDATION_RATE_LIMIT
+from app.models.schema import AnimeDetailsResponse, RecommendRequest, TrailerResponse
 from app.observability.pipeline_timing import logger, timed_stage
+from app.rate_limit import limiter
 from app.services.filter.filter_service import filter_candidates
 from app.services.intent.ai_intent_service import analyze_prompt
 from app.services.normalization.normalize_service import normalize_anime_results
@@ -13,6 +15,7 @@ from app.services.ranking.ranking_service import rank_anime
 from app.services.response.response_builder_service import build_recommendation_results
 from app.services.retreival.ai_suggest import suggest_anime
 from app.services.retreival.jikan_service import (
+    get_anime_details,
     get_anime_trailer,
     search_anime_by_intent,
     search_anime_by_titles,
@@ -57,6 +60,26 @@ def _retrieve_by_intent(request_id: str, intent: dict) -> list[dict]:
         return results
 
 
+@router.get("/anime/{mal_id}/details", response_model=AnimeDetailsResponse)
+def anime_details(mal_id: int):
+    try:
+        details = get_anime_details(mal_id)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    trailer = details.get("trailer") or {}
+    return AnimeDetailsResponse(
+        mal_id=mal_id,
+        title_japanese=details.get("title_japanese"),
+        synopsis=details.get("synopsis"),
+        trailer_url=trailer.get("url"),
+        year=details.get("year"),
+        status=details.get("status"),
+        aired_from=details.get("aired_from"),
+        aired_to=details.get("aired_to"),
+    )
+
+
 @router.get("/anime/{mal_id}/trailer", response_model=TrailerResponse)
 def anime_trailer(mal_id: int):
     try:
@@ -70,7 +93,6 @@ def anime_trailer(mal_id: int):
     )
 
 
-@router.post("/recommend")
 def recommend(data: RecommendRequest):
     request_id = f"rec-{uuid4().hex[:8]}"
     request_started_at = perf_counter()
@@ -207,4 +229,10 @@ def recommend(data: RecommendRequest):
         "intent": intent,
         "results": results,
     }
+
+
+@router.post("/recommend")
+@limiter.limit(RECOMMENDATION_RATE_LIMIT)
+def recommend_endpoint(request: Request, data: RecommendRequest):
+    return recommend(data)
 

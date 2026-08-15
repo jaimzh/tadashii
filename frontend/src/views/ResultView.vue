@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import ResultCard from '@/components/common/ResultCard.vue'
 import ResultModal from '@/components/common/ResultModal.vue'
-import { getTrailer } from '@/api/client.js'
+import { getAnimeDetails } from '@/api/client.js'
 
 defineProps({
   results: {
@@ -21,13 +21,20 @@ async function selectResult(result) {
   }
 
   try {
-    const trailer = await getTrailer(result.id)
+    const details = await getAnimeDetails(result.id)
 
     if (selected.value?.id === result.id) {
-      selected.value.trailerUrl = trailer.trailer_url
+      selected.value.japaneseName =
+        details.title_japanese || selected.value.japaneseName
+      selected.value.synopsis = details.synopsis || selected.value.synopsis
+      selected.value.trailerUrl = details.trailer_url
+      selected.value.year = details.year ? String(details.year) : selected.value.year
+      selected.value.status = details.status || ''
+      selected.value.airedFrom = details.aired_from || ''
+      selected.value.airedTo = details.aired_to || ''
     }
   } catch (error) {
-    console.error('Trailer lookup failed:', error)
+    console.error('Anime detail lookup failed:', error)
   } finally {
     if (selected.value?.id === result.id) {
       selected.value.trailerLoading = false

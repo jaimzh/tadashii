@@ -6,7 +6,7 @@ from unittest.mock import patch
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from app.api.recommend import recommend
+from app.api.recommend import anime_details, recommend
 from app.models.schema import RecommendRequest
 
 
@@ -23,6 +23,36 @@ VALID_INTENT = {
 
 
 class RecommendApiTests(unittest.TestCase):
+    def test_anime_details_returns_full_synopsis_and_trailer(self):
+        with patch(
+            "app.api.recommend.get_anime_details",
+            return_value={
+                "title_japanese": "MONSTER",
+                "synopsis": "The complete synopsis from the detail response.",
+                "trailer": {"url": "https://youtube.com/watch?v=test"},
+                "year": 2004,
+                "status": "Finished Airing",
+                "aired_from": "2004-04-07",
+                "aired_to": "2005-09-28",
+            },
+        ):
+            result = anime_details(19)
+
+        self.assertEqual(result.mal_id, 19)
+        self.assertEqual(result.title_japanese, "MONSTER")
+        self.assertEqual(
+            result.synopsis,
+            "The complete synopsis from the detail response.",
+        )
+        self.assertEqual(
+            result.trailer_url,
+            "https://youtube.com/watch?v=test",
+        )
+        self.assertEqual(result.year, 2004)
+        self.assertEqual(result.status, "Finished Airing")
+        self.assertEqual(result.aired_from, "2004-04-07")
+        self.assertEqual(result.aired_to, "2005-09-28")
+
     def test_intent_and_suggestions_run_concurrently(self):
         both_started = Barrier(2)
 

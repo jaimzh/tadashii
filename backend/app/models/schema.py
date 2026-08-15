@@ -30,6 +30,17 @@ class TrailerResponse(BaseModel):
     trailer_url: str | None = None
 
 
+class AnimeDetailsResponse(BaseModel):
+    mal_id: int
+    title_japanese: str | None = None
+    synopsis: str | None = None
+    trailer_url: str | None = None
+    year: int | None = None
+    status: str | None = None
+    aired_from: str | None = None
+    aired_to: str | None = None
+
+
 class AnimeQuote(BaseModel):
     content: str
     character: str

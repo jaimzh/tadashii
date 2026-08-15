@@ -17,6 +17,24 @@ const genres = computed(() =>
     .map((genre) => genre.trim())
     .filter(Boolean),
 )
+
+function yearFromDate(value) {
+  const match = /^(\d{4})/.exec(value || '')
+  return match?.[1] || ''
+}
+
+const airedLabel = computed(() => {
+  const startYear = yearFromDate(props.result.airedFrom) || props.result.year || ''
+  const endYear = yearFromDate(props.result.airedTo)
+
+  if (!startYear) return ''
+  if (endYear && endYear !== startYear) return `${startYear}–${endYear}`
+  if (!endYear && props.result.status === 'Currently Airing') {
+    return `${startYear}–Present`
+  }
+
+  return startYear
+})
 </script>
 
 <template>
@@ -56,9 +74,13 @@ const genres = computed(() =>
           </div>
 
           <dl class="details-grid">
-            <div v-if="result.year" class="detail-item">
-              <dt>Year</dt>
-              <dd>{{ result.year }}</dd>
+            <div v-if="airedLabel" class="detail-item">
+              <dt>Aired</dt>
+              <dd>{{ airedLabel }}</dd>
+            </div>
+            <div v-if="result.status" class="detail-item">
+              <dt>Status</dt>
+              <dd>{{ result.status }}</dd>
             </div>
             <div v-if="result.type" class="detail-item">
               <dt>Format</dt>

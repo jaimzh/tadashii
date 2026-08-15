@@ -7,6 +7,31 @@ from app.services.retreival import jikan_service
 
 
 class JikanEdgeAdapterTests(unittest.TestCase):
+    def test_removes_trailing_mal_rewrite_attribution_from_synopsis(self):
+        result = jikan_service.adapt_anime_result(
+            {
+                "malId": 19,
+                "title": "Monster",
+                "synopsis": (
+                    "A doctor pursues the consequences of a life-saving decision.\n\n"
+                    "[Written by MAL Rewrite]"
+                ),
+            }
+        )
+
+        self.assertEqual(
+            result["synopsis"],
+            "A doctor pursues the consequences of a life-saving decision.",
+        )
+
+    def test_preserves_non_attribution_bracketed_synopsis_text(self):
+        synopsis = "A tournament begins. [The final round is omitted]"
+        result = jikan_service.adapt_anime_result(
+            {"malId": 1, "title": "Test", "synopsis": synopsis}
+        )
+
+        self.assertEqual(result["synopsis"], synopsis)
+
     def test_concurrent_search_preserves_term_order_and_worker_limit(self):
         active = 0
         max_active = 0
@@ -77,6 +102,9 @@ class JikanEdgeAdapterTests(unittest.TestCase):
                 "type": "TV",
                 "score": 8.0,
                 "episodes": 220,
+                "year": 2002,
+                "status": "Finished Airing",
+                "aired": {"from": "2002-10-03", "to": "2007-02-08"},
                 "genres": ["Action", {"name": "Adventure"}],
             }
         )
@@ -84,6 +112,9 @@ class JikanEdgeAdapterTests(unittest.TestCase):
         self.assertEqual(result["mal_id"], 20)
         self.assertEqual(result["title_english"], "Naruto")
         self.assertEqual(result["title_japanese"], "ナルト")
+        self.assertEqual(result["aired_from"], "2002-10-03")
+        self.assertEqual(result["aired_to"], "2007-02-08")
+        self.assertEqual(result["status"], "Finished Airing")
         self.assertEqual(result["images"]["jpg"]["large_image_url"], "https://cdn.example/naruto.jpg")
         self.assertEqual(result["genres"], [{"name": "Action"}, {"name": "Adventure"}])
         self.assertEqual(result["data_source"], "jikan-edge")

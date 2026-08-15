@@ -1,16 +1,18 @@
+from app.config import (
+    BLOCKED_ANIME_GENRES,
+    BLOCKED_ANIME_RATINGS,
+    BLOCKED_ANIME_TYPES,
+    SHORT_FORM_MAX_EPISODES,
+    SHORT_FORM_TYPES,
+)
 from app.models.schema import AnimeCandidate
-
-BLOCKED_TYPES = ["Music"]
-BLOCKED_RATINGS = ["Rx - Hentai"]
-BLOCKED_GENRES = ["Hentai"]
-SHORT_FORM_TYPES = ["Special", "OVA", "ONA"]
 
 
 def has_blocked_genre(anime: AnimeCandidate) -> bool:
     all_genres = anime.genres + anime.explicit_genres
 
     for genre in all_genres:
-        if genre in BLOCKED_GENRES:
+        if genre in BLOCKED_ANIME_GENRES:
             return True
 
     return False
@@ -23,14 +25,14 @@ def is_short_extra(anime: AnimeCandidate) -> bool:
     if anime.episodes is None:
         return True
 
-    return anime.episodes <= 2
+    return anime.episodes <= SHORT_FORM_MAX_EPISODES
 
 
 def should_keep_anime(anime: AnimeCandidate) -> bool:
-    if anime.type in BLOCKED_TYPES:
+    if anime.type in BLOCKED_ANIME_TYPES:
         return False
 
-    if anime.rating in BLOCKED_RATINGS:
+    if anime.rating in BLOCKED_ANIME_RATINGS:
         return False
 
     if has_blocked_genre(anime):

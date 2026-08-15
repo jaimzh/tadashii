@@ -294,10 +294,39 @@ GEMINI_API_KEY=your_api_key_here
 GEMINI_MODEL=gemini-3.1-flash-lite
 GEMINI_TIMEOUT_MS=30000
 GEMINI_RANKING_RETRY_DELAY_SECONDS=0.5
+GEMINI_RANKING_MAX_ATTEMPTS=2
+RECOMMENDATION_COUNT=10
+RANKING_CANDIDATE_LIMIT=30
+AI_SUGGESTION_MIN_COUNT=5
+AI_SUGGESTION_MAX_COUNT=10
+INTENT_KEYWORD_LIMIT=5
+INTENT_SEARCH_TERM_LIMIT=8
+SEARCH_QUERY_MAX_LENGTH=80
+RECOMMENDATION_RATE_LIMIT_REQUESTS=10
+RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS=60
 JIKAN_BASE_URL=https://jikan-edge.lucas-hdo.workers.dev/v1
 JIKAN_SEARCH_LIMIT=10
 JIKAN_MAX_CONCURRENCY=3
+JIKAN_TIMEOUT_SECONDS=10
+JIKAN_RETRY_COUNT=2
 ```
+
+The defaults and explicit-content exclusions live together in `app/config.py`.
+`RECOMMENDATION_COUNT` is the final result count. `RANKING_CANDIDATE_LIMIT`
+is the maximum candidate payload sent to ranking and is automatically raised
+to at least the final result count. The AI suggestion and intent settings
+control how many search terms enter retrieval; `JIKAN_SEARCH_LIMIT` controls
+how many candidates each individual Jikan search retains.
+
+Explicit-content and short-extra filtering is configured by
+`BLOCKED_ANIME_TYPES`, `BLOCKED_ANIME_RATINGS`, `BLOCKED_ANIME_GENRES`,
+`SHORT_FORM_TYPES`, and `SHORT_FORM_MAX_EPISODES` in `app/config.py`.
+
+SlowAPI applies the in-memory IP rate limit only to `POST /api/recommend` and
+returns HTTP 429 when exceeded. Its underlying `limits` storage is per backend
+process; configure a Redis storage URI later when running multiple workers or
+instances. Configure trusted proxy handling at the ASGI server or hosting layer
+before relying on forwarded client IP headers.
 
 `JIKAN_SEARCH_LIMIT` controls how many jikan-edge results are retained from each search query. The retrieval service adapts jikan-edge's camelCase search results to the internal Jikan-v4-shaped dictionaries expected by the rest of the pipeline.
 

@@ -4,3 +4,4 @@ pydantic
 requests
 python-dotenv
 google-genai
+slowapi==0.1.10
