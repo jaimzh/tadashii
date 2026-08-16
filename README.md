@@ -28,6 +28,10 @@ Something like Naruto, but do not recommend Naruto because I have already seen i
 - Per-IP recommendation rate limiting and temporary Gemini 503 retry handling
 - Pipeline timing logs for backend performance analysis
 
+## Screenshots
+![alt text](screenshots/image.png)
+![alt text](screenshots/image-1.png)
+
 ## Technology
 
 | Area | Technology |
