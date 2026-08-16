@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -9,6 +10,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 LOG_DIRECTORY = BACKEND_ROOT / "logs"
 LOG_FILE = LOG_DIRECTORY / "pipeline_timings.txt"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+IS_SERVERLESS = bool(os.getenv("VERCEL"))
 
 
 def _configure_logger() -> logging.Logger:
@@ -17,23 +19,28 @@ def _configure_logger() -> logging.Logger:
     if getattr(logger, "_tadashii_configured", False):
         return logger
 
-    LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
-
     formatter = logging.Formatter(LOG_FORMAT)
-    file_handler = RotatingFileHandler(
-        LOG_FILE,
-        maxBytes=5 * 1024 * 1024,
-        backupCount=5,
-        encoding="utf-8",
-    )
-    file_handler.setFormatter(formatter)
 
-    terminal_handler = logging.StreamHandler()
-    terminal_handler.setFormatter(formatter)
+    if IS_SERVERLESS:
+        handlers: list[logging.Handler] = [logging.StreamHandler()]
+    else:
+        LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        handlers = [
+            RotatingFileHandler(
+                LOG_FILE,
+                maxBytes=5 * 1024 * 1024,
+                backupCount=5,
+                encoding="utf-8",
+            ),
+            logging.StreamHandler(),
+        ]
+
+    for handler in handlers:
+        handler.setFormatter(formatter)
 
     logger.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-    logger.addHandler(terminal_handler)
+    for handler in handlers:
+        logger.addHandler(handler)
     logger.propagate = False
     logger._tadashii_configured = True
 
