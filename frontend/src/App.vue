@@ -2,6 +2,7 @@
 import { computed, ref, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
+import AppFooter from '@/components/common/AppFooter.vue'
 import { recommend } from './api/client.js'
 
 const route = useRoute()
@@ -39,6 +40,7 @@ function toCardResult(recommendation) {
   return {
     id: anime.mal_id,
     title: displayTitle,
+    englishName: anime.title_english !== displayTitle ? anime.title_english : '',
     romajiName: anime.title !== displayTitle ? anime.title : '',
     japaneseName: anime.title_japanese || '',
     image: anime.image || '',
@@ -123,24 +125,24 @@ onUnmounted(() => {
 <template>
   <div class="main">
     <div class="wrapper">
-    <AppHeader
-      :is-searching="showHeaderSearch"
-      :is-loading="isLoading"
-      :query="searchQuery"
-      :search-origin="searchOrigin"
-      @search="handleSearch"
-      @home="goHome"
-    />
-    <RouterView v-slot="{ Component, route: activeRoute }">
-      <component
-        :is="Component"
-        v-bind="viewProps(activeRoute.name)"
+      <AppHeader
+        :is-searching="showHeaderSearch"
+        :is-loading="isLoading"
+        :query="searchQuery"
+        :search-origin="searchOrigin"
         @search="handleSearch"
+        @home="goHome"
       />
-    </RouterView>
+      <RouterView v-slot="{ Component, route: activeRoute }">
+        <component
+          :is="Component"
+          v-bind="viewProps(activeRoute.name)"
+          @search="handleSearch"
+        />
+      </RouterView>
+    </div>
+    <AppFooter />
   </div>
-  </div>
-  
 </template>
 
 <style>
@@ -158,5 +160,11 @@ onUnmounted(() => {
   position: relative;
   isolation: isolate;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main > .wrapper {
+  flex: 1;
 }
 </style>

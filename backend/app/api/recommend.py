@@ -68,9 +68,22 @@ def anime_details(mal_id: int):
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     trailer = details.get("trailer") or {}
+    images = details.get("images") or {}
+    jpg_images = images.get("jpg") or {}
+    studios = [
+        studio.get("name") if isinstance(studio, dict) else studio
+        for studio in details.get("studios") or []
+    ]
     return AnimeDetailsResponse(
         mal_id=mal_id,
+        title=details.get("title"),
+        title_english=details.get("title_english"),
         title_japanese=details.get("title_japanese"),
+        image_url=(
+            jpg_images.get("large_image_url")
+            or jpg_images.get("image_url")
+        ),
+        studios=[studio for studio in studios if studio],
         synopsis=details.get("synopsis"),
         trailer_url=trailer.get("url"),
         year=details.get("year"),

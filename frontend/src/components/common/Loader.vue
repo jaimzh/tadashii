@@ -26,6 +26,7 @@ import PikachuLoader from './PikachuLoader.vue';
   justify-content: center;
   align-items: center;
   gap: 2rem;
+  margin: 10rem;
 }
 
 .loader {

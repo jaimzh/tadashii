@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   PhArrowSquareOut,
   PhBookmarkSimple,
@@ -9,6 +9,7 @@ import {
   PhX,
 } from '@phosphor-icons/vue'
 import { useWatchLater } from '@/composables/useWatchLater.js'
+import SkeletonLoader from './SkeletonLoader.vue'
 
 const props = defineProps({
   result: {
@@ -20,6 +21,42 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 const { isSaved, toggleSaved } = useWatchLater()
 const savedForLater = computed(() => isSaved(props.result.id))
+const highResolutionLoaded = ref(false)
+let previousBodyOverflow = ''
+
+watch(
+  () => props.result.highResImage,
+  () => {
+    highResolutionLoaded.value = false
+  },
+)
+
+onMounted(() => {
+  previousBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = previousBodyOverflow
+})
+
+const otherNames = computed(() => {
+  const names = [
+    { label: 'English', value: props.result.englishName },
+    { label: 'Romaji', value: props.result.romajiName },
+    { label: 'Japanese', value: props.result.japaneseName },
+  ]
+  const seen = new Set([props.result.title?.trim().toLocaleLowerCase()])
+
+  return names.filter(({ value }) => {
+    const normalizedValue = value?.trim().toLocaleLowerCase()
+
+    if (!normalizedValue || seen.has(normalizedValue)) return false
+
+    seen.add(normalizedValue)
+    return true
+  })
+})
 
 const genres = computed(() =>
   (props.result.genres || '')
@@ -54,23 +91,38 @@ const airedLabel = computed(() => {
         <PhX :size="18" weight="bold" />
       </button>
 
-      <div class="modal-content">
-        <div class="modal-poster">
-          <img v-if="result.image" :src="result.image" :alt="`${result.title} poster`" />
-          <div v-else class="poster-placeholder">Poster unavailable</div>
-        </div>
+      <div class="modal-scroll">
+        <div class="modal-content">
+          <div class="modal-poster">
+            <img
+              v-if="result.image"
+              class="poster-base"
+              :src="result.image"
+              :alt="`${result.title} poster`"
+            />
+            <img
+              v-if="result.highResImage && result.highResImage !== result.image"
+              class="poster-high-resolution"
+              :class="{ 'is-loaded': highResolutionLoaded }"
+              :src="result.highResImage"
+              alt=""
+              decoding="async"
+              @load="highResolutionLoaded = true"
+            />
+            <div v-if="!result.image" class="poster-placeholder">Poster unavailable</div>
+          </div>
 
-        <div class="modal-info">
+          <div class="modal-info">
           <header class="modal-header">
             <div class="title-block">
               <h2 class="modal-title">{{ result.title }}</h2>
-              <p v-if="result.romajiName" class="alternate-title">
-                <span class="title-label">Romaji</span>
-                {{ result.romajiName }}
+              <p v-if="otherNames.length" class="alternate-names">
+                <span v-for="name in otherNames" :key="name.label" class="alternate-name">
+                  {{ name.value }}
+                </span>
               </p>
-              <p v-if="result.japaneseName" class="alternate-title">
-                <span class="title-label">Japanese</span>
-                {{ result.japaneseName }}
+              <p v-else-if="result.detailsLoading" class="alternate-names">
+                <SkeletonLoader width="12rem" height="0.72rem" />
               </p>
             </div>
           </header>
@@ -91,19 +143,37 @@ const airedLabel = computed(() => {
           <dl class="details-grid">
             <div class="detail-item">
               <dt>Aired</dt>
-              <dd>{{ airedLabel || (result.trailerLoading ? 'Loading…' : 'N/A') }}</dd>
+              <dd>
+                <SkeletonLoader
+                  v-if="result.detailsLoading && !airedLabel"
+                  width="4.75rem"
+                />
+                <template v-else>{{ airedLabel || 'N/A' }}</template>
+              </dd>
             </div>
             <div class="detail-item">
               <dt>Status</dt>
-              <dd>{{ result.status || (result.trailerLoading ? 'Loading…' : 'N/A') }}</dd>
+              <dd>
+                <SkeletonLoader
+                  v-if="result.detailsLoading && !result.status"
+                  width="6.5rem"
+                />
+                <template v-else>{{ result.status || 'N/A' }}</template>
+              </dd>
             </div>
             <div v-if="result.type" class="detail-item">
               <dt>Format</dt>
               <dd>{{ result.type }}</dd>
             </div>
-            <div v-if="result.studio" class="detail-item detail-wide">
+            <div v-if="result.studio || result.detailsLoading" class="detail-item">
               <dt>Studio</dt>
-              <dd>{{ result.studio }}</dd>
+              <dd>
+                <SkeletonLoader
+                  v-if="result.detailsLoading && !result.studio"
+                  width="6rem"
+                />
+                <template v-else>{{ result.studio || 'N/A' }}</template>
+              </dd>
             </div>
             <div v-if="genres.length" class="detail-item detail-wide genre-detail">
               <dt>Genres</dt>
@@ -154,10 +224,11 @@ const airedLabel = computed(() => {
               Watch trailer
             </a>
 
-            <span v-else-if="result.trailerLoading" class="trailer-loading">
+            <span v-else-if="result.detailsLoading" class="trailer-loading">
               Finding trailer…
             </span>
 
+          </div>
           </div>
         </div>
       </div>
@@ -188,9 +259,7 @@ const airedLabel = computed(() => {
   position: relative;
   width: min(100%, 880px);
   max-height: min(86vh, 680px);
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding: 2rem;
+  overflow: hidden;
   border: 1px solid var(--modal-border);
   border-radius: 20px;
   background: var(--modal-surface);
@@ -201,7 +270,14 @@ const airedLabel = computed(() => {
   animation: modal-in 220ms ease-out;
 }
 
-.modal-shell::-webkit-scrollbar-track {
+.modal-scroll {
+  max-height: min(86vh, 680px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 2rem;
+}
+
+.modal-scroll::-webkit-scrollbar-track {
   margin-block: 12px;
 }
 
@@ -246,6 +322,7 @@ const airedLabel = computed(() => {
 }
 
 .modal-poster {
+  position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
   overflow: hidden;
@@ -258,6 +335,17 @@ const airedLabel = computed(() => {
   height: 100%;
   display: block;
   object-fit: cover;
+}
+
+.poster-high-resolution {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+.poster-high-resolution.is-loaded {
+  opacity: 1;
 }
 
 .poster-placeholder {
@@ -294,25 +382,19 @@ const airedLabel = computed(() => {
   color: var(--modal-text);
 }
 
-.alternate-title {
-  margin-top: 0.45rem;
-  font-size: var(--font-size-sm);
+.alternate-names {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
   color: var(--modal-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
 }
 
-.alternate-title + .alternate-title {
-  margin-top: 0.2rem;
-}
-
-.title-label {
-  display: inline-block;
-  min-width: 4.8rem;
-  margin-right: 0.35rem;
-  color: var(--modal-text);
-  font-size: var(--font-size-xs);
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.alternate-name + .alternate-name::before {
+  content: '·';
+  margin: 0 0.5rem;
+  color: color-mix(in srgb, var(--modal-muted) 65%, transparent);
 }
 
 .quick-stats {
@@ -486,8 +568,12 @@ const airedLabel = computed(() => {
 
   .modal-shell {
     max-height: calc(100vh - 1.5rem);
-    padding: 1.25rem;
     border-radius: 20px;
+  }
+
+  .modal-scroll {
+    max-height: calc(100vh - 1.5rem);
+    padding: 1.25rem;
   }
 
   .modal-content {

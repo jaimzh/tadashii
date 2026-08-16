@@ -40,7 +40,7 @@ function handleSearch(query) {
 .home-view {
   position: relative;
   isolation: isolate;
-  min-height: 100vh;
+  min-height: 90vh;
   display: flex;
   flex-direction: column;
   margin-top:-5rem ;

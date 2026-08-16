@@ -16,16 +16,23 @@ const selected = ref(null)
 async function selectResult(result) {
   selected.value = {
     ...result,
-    trailerLoading: true,
+    detailsLoading: true,
     trailerUrl: null,
+    highResImage: null,
   }
 
   try {
     const details = await getAnimeDetails(result.id)
 
     if (selected.value?.id === result.id) {
+      selected.value.englishName =
+        details.title_english || selected.value.englishName
+      selected.value.romajiName = details.title || selected.value.romajiName
       selected.value.japaneseName =
         details.title_japanese || selected.value.japaneseName
+      selected.value.highResImage = details.image_url || null
+      selected.value.studio =
+        details.studios?.join(', ') || selected.value.studio
       selected.value.synopsis = details.synopsis || selected.value.synopsis
       selected.value.trailerUrl = details.trailer_url
       selected.value.year = details.year ? String(details.year) : selected.value.year
@@ -37,7 +44,7 @@ async function selectResult(result) {
     console.error('Anime detail lookup failed:', error)
   } finally {
     if (selected.value?.id === result.id) {
-      selected.value.trailerLoading = false
+      selected.value.detailsLoading = false
     }
   }
 }
@@ -58,11 +65,13 @@ async function selectResult(result) {
       />
     </div>
 
-    <ResultModal
-      v-if="selected"
-      :result="selected"
-      @close="selected = null"
-    />
+    <Transition name="result-modal">
+      <ResultModal
+        v-if="selected"
+        :result="selected"
+        @close="selected = null"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -89,6 +98,24 @@ async function selectResult(result) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   gap: 1rem;
+}
+
+.result-modal-leave-active {
+  transition: opacity 180ms ease-in;
+}
+
+.result-modal-leave-active :deep(.modal-shell) {
+  animation: none;
+  transition: opacity 180ms ease-in, transform 180ms ease-in;
+}
+
+.result-modal-leave-to {
+  opacity: 0;
+}
+
+.result-modal-leave-to :deep(.modal-shell) {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
 }
 
 @media (max-width: 720px) {

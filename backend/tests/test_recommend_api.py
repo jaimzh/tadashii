@@ -27,7 +27,16 @@ class RecommendApiTests(unittest.TestCase):
         with patch(
             "app.api.recommend.get_anime_details",
             return_value={
+                "title": "Monster",
+                "title_english": "Monster",
                 "title_japanese": "MONSTER",
+                "images": {
+                    "jpg": {
+                        "image_url": "https://cdn.example/monster.jpg",
+                        "large_image_url": "https://cdn.example/monster-large.jpg",
+                    }
+                },
+                "studios": [{"name": "Madhouse"}],
                 "synopsis": "The complete synopsis from the detail response.",
                 "trailer": {"url": "https://youtube.com/watch?v=test"},
                 "year": 2004,
@@ -39,7 +48,14 @@ class RecommendApiTests(unittest.TestCase):
             result = anime_details(19)
 
         self.assertEqual(result.mal_id, 19)
+        self.assertEqual(result.title, "Monster")
+        self.assertEqual(result.title_english, "Monster")
         self.assertEqual(result.title_japanese, "MONSTER")
+        self.assertEqual(
+            result.image_url,
+            "https://cdn.example/monster-large.jpg",
+        )
+        self.assertEqual(result.studios, ["Madhouse"])
         self.assertEqual(
             result.synopsis,
             "The complete synopsis from the detail response.",

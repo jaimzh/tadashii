@@ -32,7 +32,11 @@ class TrailerResponse(BaseModel):
 
 class AnimeDetailsResponse(BaseModel):
     mal_id: int
+    title: str | None = None
+    title_english: str | None = None
     title_japanese: str | None = None
+    image_url: str | None = None
+    studios: list[str] = []
     synopsis: str | None = None
     trailer_url: str | None = None
     year: int | None = None

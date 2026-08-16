@@ -52,6 +52,9 @@ const watched = computed(() =>
 
             <div class="item-copy">
               <h3>{{ anime.title }}</h3>
+              <p v-if="anime.englishName" class="japanese-title">
+                {{ anime.englishName }}
+              </p>
               <p v-if="anime.romajiName" class="japanese-title">
                 {{ anime.romajiName }}
               </p>
@@ -97,6 +100,9 @@ const watched = computed(() =>
 
             <div class="item-copy">
               <h3>{{ anime.title }}</h3>
+              <p v-if="anime.englishName" class="japanese-title">
+                {{ anime.englishName }}
+              </p>
               <p v-if="anime.romajiName" class="japanese-title">
                 {{ anime.romajiName }}
               </p>
@@ -114,7 +120,7 @@ const watched = computed(() =>
                 :checked="anime.watched"
                 @change="setWatched(anime.malId, $event.target.checked)"
               />
-              <PhCheckCircle :size="17" weight="fill" />
+
               <span>Watched</span>
             </label>
 

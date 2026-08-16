@@ -14,4 +14,9 @@ export const surpriseQueries = [
   'A supernatural comedy with chaotic characters',
   'A mature historical drama',
   'A fast-paced action anime with smart fights',
+  'A hidden gem with an unusual premise',
+  'A found-family story with a strong emotional payoff',
+  'A music anime with memorable performances',
+  'A slow-burn mystery set in a small town',
+  'A character-driven adventure with a strong female lead',
 ]

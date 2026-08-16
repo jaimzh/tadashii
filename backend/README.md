@@ -93,7 +93,9 @@ AI suggested titles -> Jikan title search
 Parsed intent terms -> Jikan keyword search
 ```
 
-The results are merged and deduplicated by `mal_id`.
+Results take turns across individual search-query groups and then across the
+title and intent branches. This round-robin ordering prevents early queries
+from filling the ranking shortlist. Results are deduplicated by `mal_id`.
 
 Title retrieval and intent retrieval run concurrently. Each branch may use up
 to `JIKAN_MAX_CONCURRENCY` searches, so the default peak across both branches
@@ -175,6 +177,10 @@ The ranker returns lightweight judgment objects:
 
 The ranking service uses `build_rank_payload()` to convert Pydantic `AnimeCandidate` objects into plain dictionaries before sending them to Gemini.
 
+Ranking is capped by `RANKING_CANDIDATE_LIMIT` and applies relevance-quality,
+franchise-diversity, and mainline-entry rules. A spin-off should not beat a
+strongly relevant canonical entry because of a superficial keyword match.
+
 ### 6. Response Building
 
 File: `app/services/response/response_builder_service.py`
@@ -208,6 +214,27 @@ Request:
 ```json
 {
   "prompt": "I want an emotional anime about a lonely underdog who gets stronger and finds real friends."
+}
+```
+
+### GET `/api/anime/{mal_id}/details`
+
+Returns metadata loaded lazily by the expanded frontend dialog:
+
+```json
+{
+  "mal_id": 16498,
+  "title": "Shingeki no Kyojin",
+  "title_english": "Attack on Titan",
+  "title_japanese": "進撃の巨人",
+  "image_url": "https://cdn.example/attack-on-titan-large.jpg",
+  "studios": ["Wit Studio"],
+  "synopsis": "...",
+  "trailer_url": "https://...",
+  "year": 2013,
+  "status": "Finished Airing",
+  "aired_from": "2013-04-07",
+  "aired_to": "2013-09-29"
 }
 ```
 
@@ -306,9 +333,13 @@ RECOMMENDATION_RATE_LIMIT_REQUESTS=10
 RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS=60
 JIKAN_BASE_URL=https://jikan-edge.lucas-hdo.workers.dev/v1
 JIKAN_SEARCH_LIMIT=10
+JIKAN_TITLE_SEARCH_SCAN_LIMIT=50
+JIKAN_TITLE_MATCH_LIMIT=3
 JIKAN_MAX_CONCURRENCY=3
 JIKAN_TIMEOUT_SECONDS=10
 JIKAN_RETRY_COUNT=2
+ANIMECHAN_BASE_URL=https://api.animechan.io/v1
+ANIMECHAN_TIMEOUT_SECONDS=8
 ```
 
 The defaults and explicit-content exclusions live together in `app/config.py`.
@@ -328,9 +359,16 @@ process; configure a Redis storage URI later when running multiple workers or
 instances. Configure trusted proxy handling at the ASGI server or hosting layer
 before relying on forwarded client IP headers.
 
-`JIKAN_SEARCH_LIMIT` controls how many jikan-edge results are retained from each search query. The retrieval service adapts jikan-edge's camelCase search results to the internal Jikan-v4-shaped dictionaries expected by the rest of the pipeline.
+`JIKAN_SEARCH_LIMIT` controls how many jikan-edge results are retained from an
+intent query. Suggested-title searches inspect up to
+`JIKAN_TITLE_SEARCH_SCAN_LIMIT` results and retain the closest
+`JIKAN_TITLE_MATCH_LIMIT` title matches. The retrieval service adapts
+jikan-edge's camelCase results to the internal Jikan-v4-shaped dictionaries
+expected by the rest of the pipeline.
 
-`JIKAN_MAX_CONCURRENCY` limits how many independent Jikan searches run at once within title retrieval and intent retrieval. Results retain their original query order even when requests finish out of order.
+`JIKAN_MAX_CONCURRENCY` limits how many independent Jikan searches run at once
+within title retrieval and intent retrieval. Finished search groups are placed
+in stable round-robin order, independent of request completion order.
 
 `GEMINI_TIMEOUT_MS` bounds each Gemini request. Broad SDK retries are disabled
 so an upstream stall cannot hold the recommendation pipeline indefinitely. The
@@ -342,19 +380,19 @@ ranking stage makes one additional attempt only for a temporary Gemini HTTP
 From inside the `backend` folder:
 
 ```powershell
-venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8002
+venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
 API docs:
 
 ```text
-http://127.0.0.1:8002/docs
+http://127.0.0.1:8000/docs
 ```
 
 Health check:
 
 ```text
-http://127.0.0.1:8002/health
+http://127.0.0.1:8000/health
 ```
 
 ## Pipeline Timing Logs
@@ -413,15 +451,15 @@ Response builder should combine factual anime data with ranking output.
 
 ## Later Improvements
 
-Planned or likely future improvements:
+Potential future work:
 
 ```text
-Rate limiting
-Jikan request retries and timeouts
-Gemini JSON cleanup for markdown-fenced responses
-Caching repeated Jikan and Gemini calls
-Better genre and theme search using Jikan IDs
-Better franchise handling for sequels, movies, specials, and recaps
+Redis-backed Jikan or recommendation caching
+Distributed rate-limit storage for multiple backend instances
+Gemini ranking-payload token reduction
+Recommendation feedback signals and preference-aware ranking
+Support for additional media catalogs and streaming availability data
+Account-based Watch Later synchronization
 Moving request, domain, and response models into separate files if schema.py grows too large
 ```
 

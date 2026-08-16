@@ -59,6 +59,11 @@ defineProps({
   transform: translateX(-50%);
 }
 
+.text-hint--bottom-left .text-hint__message {
+  top: calc(100% + 8px);
+  right: 0;
+}
+
 .text-hint--left .text-hint__message {
   top: 50%;
   right: calc(100% + 8px);

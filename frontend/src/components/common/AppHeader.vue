@@ -94,11 +94,13 @@ watch(
 
 <template>
   <header class="app-header">
-    <TextHint text="Home" position="bottom">
-    <button class="brand" type="button" aria-label="Go to home" @click="emit('home')">
-      <TadashiiLogo compact :animated="false" />
-    </button>
-    </TextHint>
+    <div class="brand-slot">
+      <TextHint text="Home" position="bottom">
+        <button class="brand" type="button" aria-label="Go to home" @click="emit('home')">
+          <TadashiiLogo compact :animated="false" />
+        </button>
+      </TextHint>
+    </div>
 
     <div class="nav-search-wrap" v-if="isSearching" :class="{ dimmed }">
       <SearchBar
@@ -132,10 +134,10 @@ watch(
           <PhMoon v-else :size="20" />
         </button>
       </TextHint>
-      <TextHint text="Help and information" position="bottom">
-        <button class="icon-btn" aria-label="Help">
+      <TextHint text="Help and information" position="bottom-left">
+        <RouterLink to="/help" class="icon-btn help-link" aria-label="Help and information">
           <PhQuestion :size="20" />
-        </button>
+        </RouterLink>
       </TextHint>
     </div>
 
@@ -164,10 +166,10 @@ watch(
           <PhMoon v-else :size="20" />
           <span>Change theme</span>
         </button>
-        <button type="button" class="menu-item" aria-label="Help" @click="menuOpen = false">
+        <RouterLink to="/help" class="menu-item" @click="menuOpen = false">
           <PhQuestion :size="20" />
-          <span>Help</span>
-        </button>
+          <span>Help & information</span>
+        </RouterLink>
       </div>
     </div>
   </header>
@@ -189,11 +191,19 @@ watch(
   z-index: 100;
 }
 
+.brand-slot,
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+}
+
+.brand-slot {
   min-width: 110px;
+}
+
+.brand {
+  gap: 0.5rem;
+  width: 30px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -258,6 +268,7 @@ watch(
   font: inherit;
   font-size: var(--font-size-sm);
   cursor: pointer;
+  text-decoration: none;
 }
 
 .menu-item:hover,
@@ -285,7 +296,12 @@ watch(
   text-decoration: none;
 }
 
-.watch-later-link.router-link-active {
+.help-link {
+  text-decoration: none;
+}
+
+.watch-later-link.router-link-active,
+.help-link.router-link-active {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border-color));
   color: var(--accent);
 }
@@ -327,7 +343,7 @@ watch(
     padding: 1rem 0.5rem 0.65rem;
   }
 
-  .brand {
+  .brand-slot {
     min-width: 0;
     width: 34px;
   }
