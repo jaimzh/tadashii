@@ -380,7 +380,7 @@ ranking stage makes one additional attempt only for a temporary Gemini HTTP
 From inside the `backend` folder:
 
 ```powershell
-venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
 ```
 
 API docs:

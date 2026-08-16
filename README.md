@@ -93,7 +93,7 @@ GEMINI_API_KEY=your_api_key_here
 Start FastAPI on the port expected by the Vite proxy:
 
 ```powershell
-venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
 ```
 
 Useful URLs:

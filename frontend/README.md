@@ -54,7 +54,7 @@ Run the backend on that port from the repository root:
 
 ```powershell
 cd backend
-venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000
 ```
 
 Alternatively, create `frontend/.env.local` and point the frontend directly at a backend running on another port:
