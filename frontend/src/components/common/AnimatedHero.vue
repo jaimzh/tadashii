@@ -7,14 +7,14 @@ import TadashiiLogo from '@/components/common/TadashiiLogo.vue'
     <TadashiiLogo class="hero-image" />
 
     <h1 class="sr-only">Anime recommendations that match your mood</h1>
-    <p class="hero-subtitle">
-      Describe what you feel like watching. Tadashii will help you find the right story.
-    </p>
-
-
     <!-- <p class="hero-subtitle">
-      Let's find the right story for you!
+      Describe what you feel like watching. Tadashii will help you find the right story.
     </p> -->
+
+
+    <p class="hero-subtitle">
+      Let's find the right story for you!
+    </p>
     <!-- <div class="hero-glow"></div> -->
   </section>
 </template>

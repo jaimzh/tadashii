@@ -11,6 +11,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "@phosphor-icons/vue": "^2.2.1",
     "gsap": "^3.15.0",
     "vue": "^3.5.40",
