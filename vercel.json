@@ -6,7 +6,7 @@
     },
     "backend": {
       "root": "backend",
-      "entrypoint": "app/main:app",
+      "entrypoint": "app/main.py:app",
       "functions": {
         "app/main.py": {
           "maxDuration": 60
