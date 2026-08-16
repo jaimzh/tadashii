@@ -52,6 +52,7 @@ async function selectResult(result) {
 
 <template>
   <div class="result-view">
+    <h1 class="sr-only">Your anime recommendations</h1>
     <div class="results-grid">
       <ResultCard
         v-for="result in results"

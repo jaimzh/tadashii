@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 import {
   PhArrowSquareOut,
   PhBookmarkSimple,
@@ -22,7 +22,11 @@ const emit = defineEmits(['close'])
 const { isSaved, toggleSaved } = useWatchLater()
 const savedForLater = computed(() => isSaved(props.result.id))
 const highResolutionLoaded = ref(false)
+const dialog = ref(null)
+const closeButton = ref(null)
+const titleId = useId()
 let previousBodyOverflow = ''
+let previouslyFocusedElement = null
 
 watch(
   () => props.result.highResImage,
@@ -31,13 +35,55 @@ watch(
   },
 )
 
-onMounted(() => {
+function handleDialogKeydown(event) {
+  if (event.key === 'Escape') {
+    emit('close')
+    return
+  }
+
+  if (event.key !== 'Tab' || !dialog.value) return
+
+  const focusableElements = Array.from(
+    dialog.value.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  )
+
+  if (!focusableElements.length) {
+    event.preventDefault()
+    dialog.value.focus()
+    return
+  }
+
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements.at(-1)
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    event.preventDefault()
+    lastElement.focus()
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    event.preventDefault()
+    firstElement.focus()
+  }
+}
+
+onMounted(async () => {
+  previouslyFocusedElement = document.activeElement
   previousBodyOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden'
+  document.addEventListener('keydown', handleDialogKeydown)
+
+  await nextTick()
+  closeButton.value?.focus()
 })
 
 onUnmounted(() => {
   document.body.style.overflow = previousBodyOverflow
+  document.removeEventListener('keydown', handleDialogKeydown)
+
+  if (previouslyFocusedElement instanceof HTMLElement) {
+    previouslyFocusedElement.focus()
+  }
 })
 
 const otherNames = computed(() => {
@@ -86,8 +132,21 @@ const airedLabel = computed(() => {
 
 <template>
   <div class="modal-overlay" @click.self="emit('close')">
-    <article class="modal-shell" role="dialog" aria-modal="true" :aria-label="result.title">
-      <button class="close-btn" @click="emit('close')" aria-label="Close details">
+    <article
+      ref="dialog"
+      class="modal-shell"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      tabindex="-1"
+    >
+      <button
+        ref="closeButton"
+        type="button"
+        class="close-btn"
+        aria-label="Close details"
+        @click="emit('close')"
+      >
         <PhX :size="18" weight="bold" />
       </button>
 
@@ -115,7 +174,7 @@ const airedLabel = computed(() => {
           <div class="modal-info">
           <header class="modal-header">
             <div class="title-block">
-              <h2 class="modal-title">{{ result.title }}</h2>
+              <h2 :id="titleId" class="modal-title">{{ result.title }}</h2>
               <p v-if="otherNames.length" class="alternate-names">
                 <span v-for="name in otherNames" :key="name.label" class="alternate-name">
                   {{ name.value }}
@@ -224,7 +283,7 @@ const airedLabel = computed(() => {
               Watch trailer
             </a>
 
-            <span v-else-if="result.detailsLoading" class="trailer-loading">
+            <span v-else-if="result.detailsLoading" class="trailer-loading" aria-live="polite">
               Finding trailer…
             </span>
 

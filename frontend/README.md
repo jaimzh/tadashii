@@ -134,6 +134,20 @@ npm run preview
 
 The generated files are written to `dist/`. For deployment, either serve the frontend and API from the same origin or set `VITE_API_BASE_URL` to the public backend URL before running the build.
 
+### Production URL and SEO
+
+The public site URL has one source of truth in `site.config.json`. It is currently set to:
+
+```text
+https://tadashii.vercel.app
+```
+
+If Vercel assigns a different address or a custom domain is added, update that value before the production build. The build uses it for canonical links, social metadata, `robots.txt`, and `sitemap.xml`.
+
+The Home and Help routes are indexable. Results, Watch Later, and unknown routes set `noindex` because their content is temporary, local, or not a real page. After deployment, verify the final domain in Google Search Console and submit `/sitemap.xml`.
+
+No Vercel SPA rewrite configuration is currently included. Direct navigation to Vue routes should be configured only after the rewrite behavior and deployment layout have been reviewed.
+
 ## Related Documentation
 
 See [`../backend/README.md`](../backend/README.md) for backend configuration, API response shapes, and the recommendation pipeline.

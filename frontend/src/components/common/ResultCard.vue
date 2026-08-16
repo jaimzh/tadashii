@@ -37,7 +37,13 @@ const emit = defineEmits(['select'])
     @keydown.space.prevent="emit('select')"
   >
     <div class="card-image">
-      <img v-if="image" :src="image" :alt="`${title} poster`" />
+      <img
+        v-if="image"
+        :src="image"
+        :alt="`${title} poster`"
+        loading="lazy"
+        decoding="async"
+      />
       <div v-else class="image-placeholder" aria-hidden="true">
         <span class="placeholder-mark">正</span>
         <span class="placeholder-copy">Poster artwork</span>

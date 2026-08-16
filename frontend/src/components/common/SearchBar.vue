@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, useId, watch } from 'vue'
 import { PhDiceFive, PhMagnifyingGlass } from '@phosphor-icons/vue'
 import { surpriseQueries } from '@/data/surpriseQueries'
 import TextHint from './TextHint.vue'
@@ -15,6 +15,7 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['submit'])
+const inputId = useId()
 
 const query = ref(props.value)
 
@@ -44,7 +45,9 @@ function surpriseMe() {
 <template>
   <form class="search-container" @submit.prevent="handleSubmit">
     <span class="search-border" aria-hidden="true"></span>
+    <label class="sr-only" :for="inputId">Describe the anime you feel like watching</label>
     <input
+      :id="inputId"
       v-model="query"
       type="text"
       autocomplete="off"

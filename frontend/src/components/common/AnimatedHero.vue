@@ -6,10 +6,15 @@ import TadashiiLogo from '@/components/common/TadashiiLogo.vue'
   <section class="animated-hero">
     <TadashiiLogo class="hero-image" />
 
+    <h1 class="sr-only">Anime recommendations that match your mood</h1>
     <p class="hero-subtitle">
-      Let's find the right story for you! <br />
-     
+      Describe what you feel like watching. Tadashii will help you find the right story.
     </p>
+
+
+    <!-- <p class="hero-subtitle">
+      Let's find the right story for you!
+    </p> -->
     <!-- <div class="hero-glow"></div> -->
   </section>
 </template>
@@ -32,7 +37,8 @@ import TadashiiLogo from '@/components/common/TadashiiLogo.vue'
 }
 
 .hero-subtitle {
-  font-size: var(--font-size-md);
+  max-width: 44ch;
+  font-size: var(--font-size-sm);
   line-height: 1.55;
   text-align: center;
   color: var(--text-muted);
@@ -47,5 +53,13 @@ import TadashiiLogo from '@/components/common/TadashiiLogo.vue'
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   opacity: 90%;
+}
+
+.hero-title {
+  margin: -0.25rem 0 -0.65rem;
+  color: var(--text-main);
+  font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-xl));
+  line-height: 1.25;
+  text-align: center;
 }
 </style>

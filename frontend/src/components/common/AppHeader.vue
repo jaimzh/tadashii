@@ -112,7 +112,7 @@ watch(
     </div>
 
     <!-- <SearchBar/> -->
-    <div class="actions">
+    <nav class="actions" aria-label="Primary navigation">
       <TextHint text="Watch Later" position="bottom">
         <RouterLink
           to="/watch-later"
@@ -125,6 +125,7 @@ watch(
       </TextHint>
       <TextHint :text="`Change theme (currently ${theme})`" position="bottom">
         <button
+          type="button"
           @click="toggleTheme"
           class="icon-btn"
           :aria-label="`Current theme: ${theme}. Change theme`"
@@ -139,7 +140,7 @@ watch(
           <PhQuestion :size="20" />
         </RouterLink>
       </TextHint>
-    </div>
+    </nav>
 
     <div class="mobile-menu">
       <button
@@ -154,7 +155,7 @@ watch(
         <PhList v-else :size="22" weight="bold" />
       </button>
 
-      <div v-if="menuOpen" id="mobile-header-menu" class="mobile-menu-panel">
+      <nav v-if="menuOpen" id="mobile-header-menu" class="mobile-menu-panel" aria-label="Mobile navigation">
         <RouterLink to="/watch-later" class="menu-item" @click="menuOpen = false">
           <PhBookmarkSimple :size="20" :weight="savedCount ? 'fill' : 'regular'" />
           <span>Watch Later</span>
@@ -170,7 +171,7 @@ watch(
           <PhQuestion :size="20" />
           <span>Help & information</span>
         </RouterLink>
-      </div>
+      </nav>
     </div>
   </header>
 </template>

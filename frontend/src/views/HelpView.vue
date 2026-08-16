@@ -30,7 +30,7 @@ const questions = [
 </script>
 
 <template>
-  <main class="help-view">
+  <div class="help-view">
     <header class="help-header">
       <p class="eyebrow">Guide</p>
       <h1>Help & information</h1>
@@ -126,7 +126,7 @@ const questions = [
         not host or stream anime.
       </p>
     </footer>
-  </main>
+  </div>
 </template>
 
 <style scoped>

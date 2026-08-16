@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref, onUnmounted, watch } from 'vue'
+import { computed, nextTick, ref, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
+import { useSeo } from '@/composables/useSeo.js'
 import { recommend } from './api/client.js'
 
 const route = useRoute()
@@ -13,10 +14,13 @@ const searchOrigin = ref(null)
 let loadTimer = null
 const results = ref([])
 const searchError = ref('')
+const mainContent = ref(null)
 const MIN_LOADING_TIME = 0
 const showHeaderSearch = computed(
   () => isLoading.value || route.name !== 'home',
 )
+
+useSeo()
 
 function viewProps(routeName) {
   if (routeName === 'home') {
@@ -117,6 +121,16 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => route.fullPath,
+  async (_path, previousPath) => {
+    if (previousPath === undefined) return
+
+    await nextTick()
+    mainContent.value?.focus({ preventScroll: true })
+  },
+)
+
 onUnmounted(() => {
   clearTimeout(loadTimer)
 })
@@ -124,6 +138,7 @@ onUnmounted(() => {
 
 <template>
   <div class="main">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="wrapper">
       <AppHeader
         :is-searching="showHeaderSearch"
@@ -133,13 +148,15 @@ onUnmounted(() => {
         @search="handleSearch"
         @home="goHome"
       />
-      <RouterView v-slot="{ Component, route: activeRoute }">
-        <component
-          :is="Component"
-          v-bind="viewProps(activeRoute.name)"
-          @search="handleSearch"
-        />
-      </RouterView>
+      <main id="main-content" ref="mainContent" class="route-content" tabindex="-1">
+        <RouterView v-slot="{ Component, route: activeRoute }">
+          <component
+            :is="Component"
+            v-bind="viewProps(activeRoute.name)"
+            @search="handleSearch"
+          />
+        </RouterView>
+      </main>
     </div>
     <AppFooter />
   </div>
@@ -166,5 +183,29 @@ onUnmounted(() => {
 
 .main > .wrapper {
   flex: 1;
+}
+
+.route-content:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  color: var(--bg-base);
+  background: var(--text-main);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 140ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 </style>

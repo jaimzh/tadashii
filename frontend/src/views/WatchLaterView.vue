@@ -15,7 +15,7 @@ const watched = computed(() =>
 </script>
 
 <template>
-  <main class="watch-later-view">
+  <div class="watch-later-view">
     <header class="page-header">
       <div>
         <p class="eyebrow">Your list</p>
@@ -47,7 +47,13 @@ const watched = computed(() =>
 
         <div v-else class="watch-list">
           <article v-for="anime in upNext" :key="anime.malId" class="watch-item">
-            <img v-if="anime.image" :src="anime.image" :alt="`${anime.title} poster`" />
+            <img
+              v-if="anime.image"
+              :src="anime.image"
+              :alt="`${anime.title} poster`"
+              loading="lazy"
+              decoding="async"
+            />
             <div v-else class="poster-placeholder">No image</div>
 
             <div class="item-copy">
@@ -95,7 +101,13 @@ const watched = computed(() =>
 
         <div class="watch-list">
           <article v-for="anime in watched" :key="anime.malId" class="watch-item is-watched">
-            <img v-if="anime.image" :src="anime.image" :alt="`${anime.title} poster`" />
+            <img
+              v-if="anime.image"
+              :src="anime.image"
+              :alt="`${anime.title} poster`"
+              loading="lazy"
+              decoding="async"
+            />
             <div v-else class="poster-placeholder">No image</div>
 
             <div class="item-copy">
@@ -136,7 +148,7 @@ const watched = computed(() =>
         </div>
       </section>
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>

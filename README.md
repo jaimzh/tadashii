@@ -153,6 +153,8 @@ cd frontend
 npm run build
 ```
 
+The frontend production URL is configured once in `frontend/site.config.json`. The build uses it to generate canonical metadata, `robots.txt`, and `sitemap.xml`. Update it if the final Vercel URL differs from `https://tadashii.vercel.app`.
+
 The manual end-to-end retrieval test calls Gemini and Jikan and therefore requires a valid API key and network access:
 
 ```powershell
@@ -196,4 +198,3 @@ These are product directions being explored, not confirmed release commitments:
 - Jikan Edge search results may omit English and native titles; the expanded dialog retrieves them lazily from the detail endpoint.
 - Watch Later is local-only and has no account synchronization.
 - Rate-limit storage is in memory and is not shared across multiple backend instances.
-
