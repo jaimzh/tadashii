@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { fetchQuoteList } from '@/api/client.js'
 
-const CACHE_KEY = 'tadashii-anime-quotes'
+const CACHE_KEY = 'tadashii-anime-quotes-v2'
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
 
 const quotes = ref([])
@@ -134,8 +134,7 @@ async function getNextQuote() {
     quotes.value.length &&
     currentIndex.value >= quotes.value.length
   ) {
-    currentIndex.value = 0
-    writeCache()
+    clearQuoteCache()
   }
 
   await loadQuotes()

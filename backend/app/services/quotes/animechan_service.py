@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
@@ -23,6 +24,7 @@ CURATED_ANIME = [
 ]
 
 QUOTES_PER_LIST = 5
+ANIME_PER_POOL = 4
 
 
 def _name(value) -> str | None:
@@ -91,9 +93,7 @@ def _normalize_quotes(payload, fallback_anime: str) -> list[dict]:
     return quotes
 
 
-def get_quote_list() -> dict:
-    anime = random.choice(CURATED_ANIME)
-
+def _fetch_quotes(anime: str) -> list[dict]:
     try:
         response = requests.get(
             f"{ANIMECHAN_BASE_URL.rstrip('/')}/quotes",
@@ -101,11 +101,46 @@ def get_quote_list() -> dict:
             timeout=ANIMECHAN_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
-        quotes = _normalize_quotes(response.json(), anime)
+        return _normalize_quotes(response.json(), anime)
     except (requests.RequestException, ValueError) as exc:
         raise RuntimeError(str(exc)) from exc
 
-    if not quotes:
-        raise RuntimeError(f"Animechan returned no usable quotes for {anime}")
 
-    return {"anime": anime, "quotes": quotes}
+def get_quote_list() -> dict:
+    selected_anime = random.sample(
+        CURATED_ANIME,
+        k=min(ANIME_PER_POOL, len(CURATED_ANIME)),
+    )
+    quotes = []
+
+    with ThreadPoolExecutor(max_workers=len(selected_anime)) as executor:
+        futures = {
+            executor.submit(_fetch_quotes, anime): anime
+            for anime in selected_anime
+        }
+
+        for future in as_completed(futures):
+            try:
+                quotes.extend(future.result())
+            except RuntimeError:
+                continue
+
+    unique_quotes = []
+    seen = set()
+    for quote in quotes:
+        key = quote["content"].casefold()
+        if key in seen:
+            continue
+
+        seen.add(key)
+        unique_quotes.append(quote)
+
+    random.shuffle(unique_quotes)
+
+    source_anime = list(dict.fromkeys(quote["anime"] for quote in unique_quotes))
+    quotes = unique_quotes
+
+    if not quotes:
+        raise RuntimeError("Animechan returned no usable quotes for the selected anime")
+
+    return {"anime": ", ".join(source_anime), "quotes": quotes}
