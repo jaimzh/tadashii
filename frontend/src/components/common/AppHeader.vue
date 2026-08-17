@@ -378,4 +378,5 @@ watch(
     gap: 0.35rem;
   }
 }
+
 </style>

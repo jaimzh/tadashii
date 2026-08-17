@@ -66,6 +66,8 @@ function handleSearch(query) {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* background: red; */
+  padding: 0 0px
 
 }
 
@@ -77,5 +79,11 @@ function handleSearch(query) {
   text-align: center;
 }
 
+
+@media (max-width: 420px) {
+  .search-input {
+    
+  }
+}
 
 </style>

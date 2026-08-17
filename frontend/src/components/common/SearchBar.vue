@@ -224,4 +224,38 @@ function surpriseMe() {
 .search-button {
   padding: 14px 16px 14px 10px;
 }
+
+/* ============ MOBILE OVERRIDES ============
+   Comment out this whole block to revert.
+   - smaller input text on mobile so the bar reads
+     more compact
+   - note: below 16px, iOS Safari will zoom the page
+     when the input is focused (known tradeoff) */
+@media (max-width: 420px) {
+  .search-input {
+    font-size: var(--font-size-base);
+  }
+
+  .search-actions{
+    
+    
+  }
+
+  .surprise-button,
+.search-button {
+  /* border:  1px solid black; */
+ 
+}
+
+.surprise-button{
+ padding: 14px 4px;
+}
+.search-button {
+  padding: 14px 12px 14px 4px;
+}
+
+.search-input{
+  padding: 14px 20px;
+}
+}
 </style>
