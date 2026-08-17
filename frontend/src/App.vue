@@ -5,6 +5,8 @@ import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
 import { useSeo } from '@/composables/useSeo.js'
 import { recommend } from './api/client.js'
+import { Analytics } from '@vercel/analytics/vue'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -137,7 +139,9 @@ onUnmounted(() => {
 </script>
 
 <template>
+  
   <div class="main">
+    <Analytics />
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="wrapper">
       <AppHeader
