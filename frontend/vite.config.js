@@ -23,6 +23,7 @@ export default defineConfig({
     vueDevTools(),
   ],
   server: {
+    allowedHosts: ['introverted-court.outray.app', '.outray.app'],
     proxy:{
       '/api':{
       target: 'http://localhost:8000',

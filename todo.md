@@ -26,4 +26,4 @@ Quick place to save ideas so they do not get forgotten.
 
 ## Notes and future ideas
 
-- [ ] Add new idea here.
+- [ ] Observability clean up

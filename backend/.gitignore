@@ -37,6 +37,9 @@ pip-log.txt
 pip-delete-this-directory.txt
 logs/
 
+# Personal study notes
+CONSOLIDATED_REVIEW.md
+
 # Unit test / coverage reports
 htmlcov/
 .tolles/
