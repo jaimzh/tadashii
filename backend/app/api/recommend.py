@@ -13,14 +13,14 @@ from app.services.intent.ai_intent_service import analyze_prompt
 from app.services.normalization.normalize_service import normalize_anime_results
 from app.services.ranking.ranking_service import rank_anime
 from app.services.response.response_builder_service import build_recommendation_results
-from app.services.retreival.ai_suggest import suggest_anime
-from app.services.retreival.jikan_service import (
+from app.services.retrieval.ai_suggest import suggest_anime
+from app.services.retrieval.jikan_service import (
     get_anime_details,
     get_anime_trailer,
     search_anime_by_intent,
     search_anime_by_titles,
 )
-from app.services.retreival.merge_service import merge_results
+from app.services.retrieval.merge_service import merge_results
 
 router = APIRouter()
 

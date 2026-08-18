@@ -7,12 +7,12 @@ sys.path.append(str(BACKEND_DIR))
 from app.services.filter.filter_service import filter_candidates
 from app.services.intent.ai_intent_service import analyze_prompt
 from app.services.normalization.normalize_service import normalize_anime_results
-from app.services.retreival.ai_suggest import suggest_anime
-from app.services.retreival.jikan_service import (
+from app.services.retrieval.ai_suggest import suggest_anime
+from app.services.retrieval.jikan_service import (
     search_anime_by_intent,
     search_anime_by_titles,
 )
-from app.services.retreival.merge_service import merge_results
+from app.services.retrieval.merge_service import merge_results
 
 
 def main():

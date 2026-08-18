@@ -3,7 +3,7 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
-from app.services.retreival import jikan_service
+from app.services.retrieval import jikan_service
 
 
 class JikanEdgeAdapterTests(unittest.TestCase):

@@ -308,7 +308,6 @@ backend/
   README.md
 ```
 
-Note: the folder name is currently `retreival`. It works as-is, but it is misspelled. Rename it carefully later only if you also update all imports.
 
 ## Configuration
 

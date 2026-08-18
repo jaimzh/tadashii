@@ -1,6 +1,6 @@
 import unittest
 
-from app.services.retreival.merge_service import merge_results
+from app.services.retrieval.merge_service import merge_results
 
 
 class MergeServiceTests(unittest.TestCase):
