@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import RECOMMENDATION_RATE_LIMIT
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.recommend import router as recommend_router            
 from app.api.quotes import router as quotes_router
@@ -15,7 +17,7 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,7 +39,8 @@ app.include_router(quotes_router, prefix="/api")
 
 
 @app.get("/health")
-async def health_check():
+@limiter.limit(RECOMMENDATION_RATE_LIMIT)
+async def health_check(request: Request):
     return {
         "status": "ok",
         "details": "All systems operational"
