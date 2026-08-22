@@ -11,7 +11,7 @@ Quick place to save ideas so they do not get forgotten.
 ## Backend and infrastructure
 
 - [ ] Add backend response caching.
-- [x] Add API rate limiting.
+- [x] Add API rate limiting (Redis-backed with in-memory fallback).
 - [ ] Add shared backend caching for Animechan quote batches. Browser caching already exists.
 - [x] Proxy third-party API calls through FastAPI so credentials stay private.
 
