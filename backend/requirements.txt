@@ -5,3 +5,4 @@ requests
 python-dotenv
 google-genai
 slowapi==0.1.10
+redis>=5.0.0

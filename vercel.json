@@ -8,7 +8,7 @@
       "root": "backend",
       "entrypoint": "main:app",
       "functions": {
-        "app/main.py": {
+        "main.py": {
           "maxDuration": 60
         }
       }

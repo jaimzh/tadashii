@@ -1,4 +1,6 @@
 import unittest
+import importlib
+import sys
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -26,6 +28,19 @@ class RecommendationRateLimitTests(unittest.TestCase):
 
         self.assertTrue(all(response.status_code == 200 for response in responses[:10]))
         self.assertEqual(responses[10].status_code, 429)
+
+    def test_api_health_route_is_available(self):
+        response = self.client.get("/api/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "ok")
+
+    @patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379/0"})
+    def test_rate_limiter_imports_with_redis_url(self):
+        sys.modules.pop("app.rate_limit", None)
+        module = importlib.import_module("app.rate_limit")
+
+        self.assertIsNotNone(module.limiter)
 
 
 if __name__ == "__main__":

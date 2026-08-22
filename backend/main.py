@@ -47,6 +47,12 @@ async def health_check(request: Request):
     }
 
 
+@app.get("/api/health")
+@limiter.limit(RECOMMENDATION_RATE_LIMIT)
+async def api_health_check(request: Request):
+    return await health_check(request)
+
+
 
 # cd backend
 # venv\Scripts\activate
