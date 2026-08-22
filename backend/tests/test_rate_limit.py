@@ -42,6 +42,26 @@ class RecommendationRateLimitTests(unittest.TestCase):
 
         self.assertIsNotNone(module.limiter)
 
+    @patch.dict("os.environ", {"REDIS_URL": '"redis://localhost:6379/0"'})
+    def test_rate_limiter_strips_quoted_redis_url(self):
+        sys.modules.pop("app.rate_limit", None)
+        module = importlib.import_module("app.rate_limit")
+
+        self.assertEqual(
+            module.RATE_LIMIT_STORAGE_URI,
+            "redis://localhost:6379/0",
+        )
+
+    @patch.dict("os.environ", {"REDIS_URL": 'redis://localhost:6379"'})
+    def test_rate_limiter_strips_trailing_quote_from_redis_url(self):
+        sys.modules.pop("app.rate_limit", None)
+        module = importlib.import_module("app.rate_limit")
+
+        self.assertEqual(
+            module.RATE_LIMIT_STORAGE_URI,
+            "redis://localhost:6379",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
