@@ -32,16 +32,23 @@ const questions = [
 <template>
   <div class="help-view">
     <header class="help-header">
-      <p class="eyebrow">Guide</p>
-      <h1>Help & information</h1>
+      <h1>Guide</h1>
       <p class="lede">
         Tadashii turns a natural-language description into a focused list of anime,
-        with a match score and a reason for every recommendation.
+        with a match score and a reason for every recommendation. You can read about how Tadashii was actually made
+        <a
+          href="https://jaimz.is-a.dev/projects/tadashii/dump"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          here
+        </a>.
       </p>
+      
     </header>
 
     <section class="help-section" aria-labelledby="search-heading">
-      <div class="section-number">01</div>
+      <div class="section-number">一</div>
       <div class="section-content">
         <h2 id="search-heading">Describe what you actually want</h2>
         <p>
@@ -55,7 +62,7 @@ const questions = [
     </section>
 
     <section class="help-section" aria-labelledby="results-heading">
-      <div class="section-number">02</div>
+      <div class="section-number">二</div>
       <div class="section-content">
         <h2 id="results-heading">Understand the results</h2>
         <p>
@@ -67,7 +74,7 @@ const questions = [
     </section>
 
     <section class="help-section" aria-labelledby="recommendation-heading">
-      <div class="section-number">03</div>
+      <div class="section-number">三</div>
       <div class="section-content">
         <h2 id="recommendation-heading">How recommendations are made</h2>
         <p>
@@ -80,7 +87,7 @@ const questions = [
     </section>
 
     <section class="help-section" aria-labelledby="future-heading">
-      <div class="section-number">04</div>
+      <div class="section-number">四</div>
       <div class="section-content">
         <h2 id="future-heading">What could come next</h2>
         <p>
@@ -101,20 +108,19 @@ const questions = [
             <span>Mark suggestions as helpful, irrelevant, or already seen so future rankings can better reflect your preferences.</span>
           </li>
         </ul>
-        <p class="future-note">
-          These are ideas being explored rather than confirmed release commitments.
-        </p>
       </div>
     </section>
 
-    <section class="faq" aria-labelledby="faq-heading">
-      <p class="eyebrow">Common questions</p>
-      <h2 id="faq-heading">A few useful details</h2>
-      <div class="faq-list">
-        <details v-for="item in questions" :key="item.question">
-          <summary>{{ item.question }}</summary>
-          <p>{{ item.answer }}</p>
-        </details>
+    <section class="help-section faq" aria-labelledby="faq-heading">
+      <div class="section-number">五</div>
+      <div class="section-content">
+        <h2 id="faq-heading">A few useful details</h2>
+        <div class="faq-list">
+          <details v-for="item in questions" :key="item.question">
+            <summary>{{ item.question }}</summary>
+            <p>{{ item.answer }}</p>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -137,7 +143,6 @@ const questions = [
 }
 
 .help-header {
-  max-width: 680px;
   margin-bottom: 4rem;
 }
 
@@ -158,18 +163,36 @@ h1 {
 }
 
 .lede {
-  max-width: 62ch;
+  max-width: none;
   margin-top: 1rem;
   color: var(--text-muted);
   font-size: var(--font-size-md);
 }
 
+.lede a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.lede a:hover,
+.lede a:focus-visible {
+  color: var(--text-main);
+  outline: none;
+}
+
 .help-section {
   display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  gap: 1.25rem;
-  padding: 2rem 0;
-  border-top: 1px solid var(--border-color);
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1.85rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+}
+
+.help-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .section-number {
@@ -236,17 +259,12 @@ h1 {
   font-size: var(--font-size-sm);
 }
 
-.faq {
-  padding-top: 3.5rem;
-}
-
 .faq-list {
   margin-top: 1.25rem;
-  border-top: 1px solid var(--border-color);
 }
 
 details {
-  border-bottom: 1px solid var(--border-color);
+  border: 0;
 }
 
 summary {
@@ -254,6 +272,11 @@ summary {
   color: var(--text-main);
   font-weight: 600;
   cursor: pointer;
+}
+
+summary::marker,
+summary::-webkit-details-marker {
+  color: var(--accent);
 }
 
 details p {
@@ -264,15 +287,22 @@ details p {
 }
 
 .about-note {
-  margin-top: 3.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
   color: var(--text-main);
 }
 
-.about-note strong,
-.about-note p {
+.about-note strong {
+  display: block;
   font-size: var(--font-size-sm);
+}
+
+.about-note p {
+  max-width: none;
+  margin-top: 0.85rem;
+  font-size: var(--font-size-sm);
+  line-height: 1.65;
 }
 
 @media (max-width: 600px) {

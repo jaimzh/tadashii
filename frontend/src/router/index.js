@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import ResultView from '@/views/ResultView.vue'
 import WatchLaterView from '@/views/WatchLaterView.vue'
-import HelpView from '@/views/HelpView.vue'
+import GuideView from '@/views/GuideView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 
 const router = createRouter({
@@ -42,9 +42,9 @@ const router = createRouter({
     {
       path: '/help',
       name: 'help',
-      component: HelpView,
+      component: GuideView,
       meta: {
-        title: 'Help & Information | Tadashii',
+        title: 'Guide | Tadashii',
         description:
           'Learn how to describe what you want to watch, understand Tadashii recommendations, and manage your Watch Later list.',
         canonical: '/help',

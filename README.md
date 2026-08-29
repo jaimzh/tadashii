@@ -4,9 +4,11 @@
 
 <h1 align="center">Tadashii</h1>
 
-<p align="center"><em>"I know what I feel like watching, but I don't know what to watch."</em>-me</p>
+<p align="center"><em>"I know what I feel like watching, but I don't know what to watch." </em>-me</p>
 
 Tadashii is an AI-assisted anime discovery app. Describe a mood, story, character arc, genre, or an anime you already enjoy, and Tadashii returns a focused set of recommendations with match scores and specific explanations.
+
+You can read more about how Tadashii works and how it was made on the [Tadashii dev notes](https://jaimz.is-a.dev/projects/tadashii/dump).
 
 Prompts can include positive and negative constraints:
 

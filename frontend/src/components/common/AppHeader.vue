@@ -135,8 +135,8 @@ watch(
           <PhMoon v-else :size="20" />
         </button>
       </TextHint>
-      <TextHint text="Help and information" position="bottom-left">
-        <RouterLink to="/help" class="icon-btn help-link" aria-label="Help and information">
+      <TextHint text="Guide" position="bottom-left">
+        <RouterLink to="/help" class="icon-btn help-link" aria-label="Guide">
           <PhQuestion :size="20" />
         </RouterLink>
       </TextHint>
@@ -169,7 +169,7 @@ watch(
         </button>
         <RouterLink to="/help" class="menu-item" @click="menuOpen = false">
           <PhQuestion :size="20" />
-          <span>Help & information</span>
+          <span>Guide</span>
         </RouterLink>
       </nav>
     </div>
