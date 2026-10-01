@@ -62,7 +62,7 @@ GEMINI_RANKING_MAX_ATTEMPTS = _positive_int_env(
     "GEMINI_RANKING_MAX_ATTEMPTS", 2
 )
 JIKAN_BASE_URL = os.getenv(
-    "JIKAN_BASE_URL", "https://jikan-edge.lucas-hdo.workers.dev/v1"
+    "JIKAN_BASE_URL", "https://jikan.lucashdo.com/v1"
 )
 #this should be renamed to jikan intent search limit 
 JIKAN_SEARCH_LIMIT = _positive_int_env("JIKAN_SEARCH_LIMIT", 10)

@@ -210,6 +210,37 @@ class JikanEdgeAdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "invalid search response"):
                 jikan_service.jikan_search_anime("Naruto")
 
+    def test_search_404_returns_empty_results(self):
+        response = Mock(status_code=404)
+
+        with patch.object(jikan_service.requests, "get", return_value=response):
+            results = jikan_service.jikan_search_anime("filmmaking")
+
+        self.assertEqual(results, [])
+
+    def test_search_honors_retry_after_on_rate_limit(self):
+        rate_limited = Mock(status_code=429)
+        rate_limited.headers = {"Retry-After": "3"}
+
+        success = Mock(status_code=200)
+        success.json.return_value = {
+            "data": [{"malId": 20, "title": "Naruto"}],
+            "meta": {"cached": True},
+        }
+
+        with (
+            patch.object(
+                jikan_service.requests,
+                "get",
+                side_effect=[rate_limited, success],
+            ),
+            patch.object(jikan_service.time, "sleep") as sleep,
+        ):
+            results = jikan_service.jikan_search_anime("Naruto")
+
+        sleep.assert_called_once_with(3.0)
+        self.assertEqual(results[0]["mal_id"], 20)
+
     def test_keeps_legacy_jikan_v4_items_unchanged(self):
         anime = {"mal_id": 20, "title": "Naruto"}
         self.assertIs(jikan_service.adapt_anime_result(anime), anime)
@@ -238,6 +269,26 @@ class JikanEdgeAdapterTests(unittest.TestCase):
 
         with patch.object(jikan_service.requests, "get", return_value=response):
             self.assertIsNone(jikan_service.get_anime_trailer(20))
+
+    def test_details_honors_retry_after_on_rate_limit(self):
+        rate_limited = Mock(status_code=429)
+        rate_limited.headers = {"Retry-After": "2"}
+
+        success = Mock(status_code=200)
+        success.json.return_value = {"data": {"malId": 20, "title": "Naruto"}}
+
+        with (
+            patch.object(
+                jikan_service.requests,
+                "get",
+                side_effect=[rate_limited, success],
+            ),
+            patch.object(jikan_service.time, "sleep") as sleep,
+        ):
+            details = jikan_service.get_anime_details(20)
+
+        sleep.assert_called_once_with(2.0)
+        self.assertEqual(details["mal_id"], 20)
 
     def test_adds_missing_japanese_title_to_final_recommendation(self):
         anime = Mock(mal_id=20, title_japanese=None)

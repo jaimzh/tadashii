@@ -1,7 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
+from email.utils import parsedate_to_datetime
 from functools import partial
 import re
 import time
+from datetime import datetime, timezone
 from time import perf_counter
 import unicodedata
 from difflib import SequenceMatcher
@@ -44,6 +46,31 @@ def _named_items(items: list | None) -> list[dict]:
             normalized.append(item)
 
     return normalized
+
+
+def _retry_delay(response: requests.Response, attempt: int) -> float:
+    if response.status_code != 429:
+        return 1 + attempt
+
+    retry_after = response.headers.get("Retry-After")
+
+    if not retry_after:
+        return 1 + attempt
+
+    try:
+        return max(0.0, float(retry_after))
+    except ValueError:
+        pass
+
+    try:
+        retry_at = parsedate_to_datetime(retry_after)
+    except (TypeError, ValueError):
+        return 1 + attempt
+
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=timezone.utc)
+
+    return max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
 
 
 def adapt_anime_result(anime: dict) -> dict:
@@ -116,7 +143,7 @@ def get_anime_details(mal_id: int) -> dict:
 
             if response.status_code == 429 or response.status_code >= 500:
                 last_error = f"Jikan returned {response.status_code} for anime {mal_id}"
-                time.sleep(1 + attempt)
+                time.sleep(_retry_delay(response, attempt))
                 continue
 
             response.raise_for_status()
@@ -304,8 +331,19 @@ def jikan_search_anime(
 
             if response.status_code == 429 or response.status_code >= 500:
                 last_error = f"Jikan returned {response.status_code} for query '{query}'"
-                time.sleep(1 + attempt)
+                time.sleep(_retry_delay(response, attempt))
                 continue
+
+            if response.status_code == 404:
+                logger.info(
+                    "request=%s service=jikan query=%r duration_s=%.3f "
+                    "status=not_found attempts=%d count=0",
+                    request_id or "untracked",
+                    query,
+                    perf_counter() - started_at,
+                    attempts,
+                )
+                return []
 
             response.raise_for_status()
             payload = response.json()
