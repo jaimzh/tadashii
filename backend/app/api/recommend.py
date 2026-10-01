@@ -74,8 +74,13 @@ def anime_details(mal_id: int):
         studio.get("name") if isinstance(studio, dict) else studio
         for studio in details.get("studios") or []
     ]
+    genres = [
+        genre.get("name") if isinstance(genre, dict) else genre
+        for genre in details.get("genres") or []
+    ]
     return AnimeDetailsResponse(
         mal_id=mal_id,
+        url=details.get("url"),
         title=details.get("title"),
         title_english=details.get("title_english"),
         title_japanese=details.get("title_japanese"),
@@ -83,6 +88,10 @@ def anime_details(mal_id: int):
             jpg_images.get("large_image_url")
             or jpg_images.get("image_url")
         ),
+        type=details.get("type"),
+        episodes=details.get("episodes"),
+        score=details.get("score"),
+        genres=[genre for genre in genres if genre],
         studios=[studio for studio in studios if studio],
         synopsis=details.get("synopsis"),
         trailer_url=trailer.get("url"),

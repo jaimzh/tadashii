@@ -54,10 +54,15 @@ export async function getAnimeDetails(malId) {
 
     detailsRequest = Promise.resolve({
       mal_id: malId,
+      url: recommendation?.anime.url || null,
       title: recommendation?.anime.title || null,
       title_english: recommendation?.anime.title_english || null,
       title_japanese: recommendation?.anime.title_japanese || null,
       image_url: recommendation?.anime.image || null,
+      type: recommendation?.anime.type || null,
+      episodes: recommendation?.anime.episodes || null,
+      score: recommendation?.anime.score || null,
+      genres: recommendation?.anime.genres || [],
       studios: recommendation?.anime.studios || [],
       synopsis: recommendation?.anime.synopsis || null,
       trailer_url: recommendation?.anime.trailer_url || null,

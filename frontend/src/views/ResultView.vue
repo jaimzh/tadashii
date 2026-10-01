@@ -31,10 +31,18 @@ async function selectResult(result) {
       selected.value.japaneseName =
         details.title_japanese || selected.value.japaneseName
       selected.value.highResImage = details.image_url || null
+      selected.value.episodes = details.episodes
+        ? String(details.episodes)
+        : selected.value.episodes
+      selected.value.rating = details.score ? String(details.score) : selected.value.rating
+      selected.value.type = details.type || selected.value.type
+      selected.value.genres =
+        details.genres?.join(', ') || selected.value.genres
       selected.value.studio =
         details.studios?.join(', ') || selected.value.studio
       selected.value.synopsis = details.synopsis || selected.value.synopsis
       selected.value.trailerUrl = details.trailer_url
+      selected.value.url = details.url || selected.value.url
       selected.value.year = details.year ? String(details.year) : selected.value.year
       selected.value.status = details.status || ''
       selected.value.airedFrom = details.aired_from || ''

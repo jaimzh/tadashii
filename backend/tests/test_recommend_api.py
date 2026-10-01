@@ -28,6 +28,7 @@ class RecommendApiTests(unittest.TestCase):
             "app.api.recommend.get_anime_details",
             return_value={
                 "title": "Monster",
+                "url": "https://myanimelist.net/anime/19/Monster",
                 "title_english": "Monster",
                 "title_japanese": "MONSTER",
                 "images": {
@@ -36,6 +37,10 @@ class RecommendApiTests(unittest.TestCase):
                         "large_image_url": "https://cdn.example/monster-large.jpg",
                     }
                 },
+                "type": "TV",
+                "episodes": 74,
+                "score": 8.89,
+                "genres": [{"name": "Drama"}, {"name": "Mystery"}],
                 "studios": [{"name": "Madhouse"}],
                 "synopsis": "The complete synopsis from the detail response.",
                 "trailer": {"url": "https://youtube.com/watch?v=test"},
@@ -48,6 +53,7 @@ class RecommendApiTests(unittest.TestCase):
             result = anime_details(19)
 
         self.assertEqual(result.mal_id, 19)
+        self.assertEqual(result.url, "https://myanimelist.net/anime/19/Monster")
         self.assertEqual(result.title, "Monster")
         self.assertEqual(result.title_english, "Monster")
         self.assertEqual(result.title_japanese, "MONSTER")
@@ -55,6 +61,10 @@ class RecommendApiTests(unittest.TestCase):
             result.image_url,
             "https://cdn.example/monster-large.jpg",
         )
+        self.assertEqual(result.type, "TV")
+        self.assertEqual(result.episodes, 74)
+        self.assertEqual(result.score, 8.89)
+        self.assertEqual(result.genres, ["Drama", "Mystery"])
         self.assertEqual(result.studios, ["Madhouse"])
         self.assertEqual(
             result.synopsis,

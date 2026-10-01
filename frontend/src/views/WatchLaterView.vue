@@ -1,9 +1,12 @@
 <script setup>
-import { computed } from 'vue'
-import { PhBookmarkSimple, PhCheckCircle, PhTrashSimple } from '@phosphor-icons/vue'
+import { computed, ref } from 'vue'
+import { PhBookmarkSimple, PhTrashSimple } from '@phosphor-icons/vue'
+import { getAnimeDetails } from '@/api/client.js'
+import ResultModal from '@/components/common/ResultModal.vue'
 import { useWatchLater } from '@/composables/useWatchLater.js'
 
 const { savedAnime, removeSaved, setWatched } = useWatchLater()
+const selected = ref(null)
 
 const upNext = computed(() =>
   savedAnime.value.filter((anime) => !anime.watched),
@@ -12,6 +15,72 @@ const upNext = computed(() =>
 const watched = computed(() =>
   savedAnime.value.filter((anime) => anime.watched),
 )
+
+function toModalResult(anime) {
+  return {
+    id: anime.malId,
+    title: anime.title,
+    englishName: anime.englishName || '',
+    romajiName: anime.romajiName || '',
+    japaneseName: anime.japaneseName || '',
+    image: anime.image || '',
+    highResImage: null,
+    episodes: anime.episodes || 'N/A',
+    rating: anime.rating || 'N/A',
+    type: anime.type || '',
+    year: anime.year || '',
+    genres: anime.genres || '',
+    studio: anime.studio || '',
+    synopsis: anime.synopsis || '',
+    reason: anime.reason || '',
+    url: anime.url || '',
+    trailerUrl: null,
+    status: '',
+    airedFrom: '',
+    airedTo: '',
+    detailsLoading: true,
+  }
+}
+
+async function openSavedAnime(anime) {
+  selected.value = toModalResult(anime)
+
+  try {
+    const details = await getAnimeDetails(anime.malId)
+
+    if (selected.value?.id === anime.malId) {
+      selected.value.englishName =
+        details.title_english || selected.value.englishName
+      selected.value.romajiName = details.title || selected.value.romajiName
+      selected.value.japaneseName =
+        details.title_japanese || selected.value.japaneseName
+      selected.value.highResImage = details.image_url || null
+      selected.value.image = selected.value.image || details.image_url || ''
+      selected.value.episodes = details.episodes
+        ? String(details.episodes)
+        : selected.value.episodes
+      selected.value.rating = details.score ? String(details.score) : selected.value.rating
+      selected.value.type = details.type || selected.value.type
+      selected.value.genres =
+        details.genres?.join(', ') || selected.value.genres
+      selected.value.studio =
+        details.studios?.join(', ') || selected.value.studio
+      selected.value.synopsis = details.synopsis || selected.value.synopsis
+      selected.value.trailerUrl = details.trailer_url
+      selected.value.url = details.url || selected.value.url
+      selected.value.year = details.year ? String(details.year) : selected.value.year
+      selected.value.status = details.status || ''
+      selected.value.airedFrom = details.aired_from || ''
+      selected.value.airedTo = details.aired_to || ''
+    }
+  } catch (error) {
+    console.error('Saved anime detail lookup failed:', error)
+  } finally {
+    if (selected.value?.id === anime.malId) {
+      selected.value.detailsLoading = false
+    }
+  }
+}
 </script>
 
 <template>
@@ -46,7 +115,17 @@ const watched = computed(() =>
         </p>
 
         <div v-else class="watch-list">
-          <article v-for="anime in upNext" :key="anime.malId" class="watch-item">
+          <article
+            v-for="anime in upNext"
+            :key="anime.malId"
+            class="watch-item"
+            role="button"
+            tabindex="0"
+            :aria-label="`Open details for ${anime.title}`"
+            @click="openSavedAnime(anime)"
+            @keydown.enter="openSavedAnime(anime)"
+            @keydown.space.prevent="openSavedAnime(anime)"
+          >
             <img
               v-if="anime.image"
               :src="anime.image"
@@ -72,10 +151,11 @@ const watched = computed(() =>
               </p>
             </div>
 
-            <label class="watched-toggle">
+            <label class="watched-toggle" @click.stop>
               <input
                 type="checkbox"
                 :checked="anime.watched"
+                @click.stop
                 @change="setWatched(anime.malId, $event.target.checked)"
               />
               <span>Watched</span>
@@ -85,7 +165,7 @@ const watched = computed(() =>
               type="button"
               class="remove-btn"
               :aria-label="`Remove ${anime.title} from Watch Later`"
-              @click="removeSaved(anime.malId)"
+              @click.stop="removeSaved(anime.malId)"
             >
               <PhTrashSimple :size="18" />
             </button>
@@ -100,7 +180,17 @@ const watched = computed(() =>
         </div>
 
         <div class="watch-list">
-          <article v-for="anime in watched" :key="anime.malId" class="watch-item is-watched">
+          <article
+            v-for="anime in watched"
+            :key="anime.malId"
+            class="watch-item is-watched"
+            role="button"
+            tabindex="0"
+            :aria-label="`Open details for ${anime.title}`"
+            @click="openSavedAnime(anime)"
+            @keydown.enter="openSavedAnime(anime)"
+            @keydown.space.prevent="openSavedAnime(anime)"
+          >
             <img
               v-if="anime.image"
               :src="anime.image"
@@ -126,10 +216,11 @@ const watched = computed(() =>
               </p>
             </div>
 
-            <label class="watched-toggle">
+            <label class="watched-toggle" @click.stop>
               <input
                 type="checkbox"
                 :checked="anime.watched"
+                @click.stop
                 @change="setWatched(anime.malId, $event.target.checked)"
               />
 
@@ -140,7 +231,7 @@ const watched = computed(() =>
               type="button"
               class="remove-btn"
               :aria-label="`Remove ${anime.title} from Watch Later`"
-              @click="removeSaved(anime.malId)"
+              @click.stop="removeSaved(anime.malId)"
             >
               <PhTrashSimple :size="18" />
             </button>
@@ -148,6 +239,14 @@ const watched = computed(() =>
         </div>
       </section>
     </div>
+
+    <Transition name="result-modal">
+      <ResultModal
+        v-if="selected"
+        :result="selected"
+        @close="selected = null"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -277,11 +376,18 @@ h1 {
   border: 1px solid var(--border-color);
   border-radius: 14px;
   background: var(--bg-light);
+  cursor: pointer;
+  outline: none;
   transition: border-color 160ms ease, background 160ms ease;
 }
 
 .watch-item:hover {
   border-color: color-mix(in srgb, var(--accent) 24%, var(--border-color));
+}
+
+.watch-item:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .watch-item > img,
@@ -344,6 +450,11 @@ h1 {
   cursor: pointer;
 }
 
+.watched-toggle,
+.remove-btn {
+  cursor: pointer;
+}
+
 .watched-toggle input {
   width: 16px;
   height: 16px;
@@ -382,6 +493,24 @@ h1 {
 
 .is-watched .item-copy {
   opacity: 0.62;
+}
+
+.result-modal-leave-active {
+  transition: opacity 180ms ease-in;
+}
+
+.result-modal-leave-active :deep(.modal-shell) {
+  animation: none;
+  transition: opacity 180ms ease-in, transform 180ms ease-in;
+}
+
+.result-modal-leave-to {
+  opacity: 0;
+}
+
+.result-modal-leave-to :deep(.modal-shell) {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
 }
 
 @media (max-width: 620px) {
